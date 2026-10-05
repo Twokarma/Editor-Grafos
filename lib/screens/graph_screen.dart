@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graph_maker_app_2/screens/insertion_sort.dart';
 
 import 'package:graph_maker_app_2/widgets/graph_canvas.dart';
 import 'package:provider/provider.dart';
@@ -7,10 +8,72 @@ import '../providers/graph_provider.dart';
 import 'chat_screen.dart';
 import 'hungarian_screen.dart';
 import 'matrix_screen.dart';
+import 'selection_sort.dart';
 import 'JohnsonScreen .dart';
 
 class GraphScreen extends StatelessWidget {
   const GraphScreen({super.key});
+
+  Future<void> _showSortMenu(BuildContext fabContext) async {
+  const menuWidth = 200.0;
+
+  final button = fabContext.findRenderObject() as RenderBox;
+  final overlay =
+  Overlay.of(fabContext).context.findRenderObject() as RenderBox;
+
+  final topLeft = button.localToGlobal(Offset.zero, ancestor: overlay);
+
+  // El borde derecho del menú queda justo a la izquierda del botón
+  final position = RelativeRect.fromLTRB(
+    topLeft.dx - menuWidth - 8,
+    topLeft.dy,
+    overlay.size.width - topLeft.dx + 8,
+    overlay.size.height - topLeft.dy - button.size.height,
+  );
+
+  final value = await showMenu<String>(
+    context: fabContext,
+    position: position,
+    elevation: 2,
+    color: Colors.blueGrey[60],
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    items: const [
+      PopupMenuItem(
+        value: 'selection',
+        child: ListTile(
+          leading: Icon(Icons.sort),
+          title: Text("Selection Sort"),
+          iconColor: Colors.blueAccent,
+        ),
+      ),
+      PopupMenuItem(
+        value: 'insertion',
+        child: ListTile(
+          leading: Icon(Icons.more_horiz),
+          title: Text("Insertion sort"),
+          iconColor: Colors.blueAccent,
+        ),
+      ),
+      // PopupMenuItem(value: 'otro', child: ...),
+    ],
+  );
+
+ if (value == null || !fabContext.mounted) return;
+  switch( value){
+    case 'selection':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_) => const SelectionSort()),
+      );
+      break;
+    case 'insertion':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_) => const InsertionSort()),
+      );
+      break;
+  }
+}
+
+
 
   Future<void> _showSaveDialog(BuildContext context, GraphProvider provider) async {
     final controller = TextEditingController();
@@ -224,6 +287,17 @@ class GraphScreen extends StatelessWidget {
               "J",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18),
+            ),
+          ),
+
+         
+           const SizedBox(height: 12),
+          Builder(
+            builder: (fabContext) => FloatingActionButton(
+              heroTag: "menuFab",
+              onPressed: () => _showSortMenu(fabContext),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.more_horiz),
             ),
           ),
         ],
