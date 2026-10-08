@@ -23,10 +23,10 @@ class _SelectionSortState extends State<SelectionSort> {
 
   // Estado del algoritmo (para resaltar los bolos)
   bool _ordenando = false;
-  int _i = -1;      // posición que se está fijando
-  int _j = -1;      // bolo que se está comparando
-  int _min = -1;    // menor encontrado hasta ahora
-  int _fijos = 0;   // cuántos bolos del inicio ya quedaron en su lugar
+  int _i = -1; // posición que se está fijando
+  int _j = -1; // bolo que se está comparando
+  int _min = -1; // menor encontrado hasta ahora
+  int _fijos = 0; // cuántos bolos del inicio ya quedaron en su lugar
 
   // Temporizador
   final Stopwatch _cronometro = Stopwatch();
@@ -136,6 +136,10 @@ class _SelectionSortState extends State<SelectionSort> {
     return Colors.white;
   }
 
+  // Convierte la escala del bolo en su número (1 = el más pequeño)
+  int _numeroDe(double escala) =>
+      ((escala - escalaInicial) / incremento).round() + 1;
+
   String get _tiempo {
     final ms = _cronometro.elapsedMilliseconds;
     final min = (ms ~/ 60000).toString().padLeft(2, '0');
@@ -193,6 +197,7 @@ class _SelectionSortState extends State<SelectionSort> {
                           child: Bolo(
                             escala: _escalas[idx],
                             color: _colorDe(idx),
+                            numero: _numeroDe(_escalas[idx]),
                           ),
                         ),
                     ],

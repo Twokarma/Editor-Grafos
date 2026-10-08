@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class BoloPainter extends CustomPainter {
   final Color color;
-  BoloPainter({this.color = Colors.white});
+  final int? numero;
+  BoloPainter({this.color = Colors.white, this.numero});
 
   // Lienzo base del bolo
   static const double anchoBase = 100;
@@ -42,24 +43,45 @@ class BoloPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 10,
     );
+
+
+    if (numero != null) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '$numero',
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 48, // en unidades del lienzo base
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      // Centrado horizontal en x = 50, en la parte ancha del cuerpo
+      tp.paint(canvas, Offset(50 - tp.width / 2, 200 - tp.height / 2));
+    }
   }
 
+
+
   @override
-  bool shouldRepaint(covariant BoloPainter old) => old.color != color;
+  bool shouldRepaint(covariant BoloPainter old) => old.color != color || old.numero != numero;
 }
 
 class Bolo extends StatelessWidget {
   /// 1.0 = tamaño predeterminado (100 x 300)
   final double escala;
   final Color color;
+  final int? numero;  
 
-  const Bolo({super.key, this.escala = 1.0, this.color = Colors.white});
+  const Bolo({super.key, this.escala = 1.0, this.color = Colors.white, this.numero});
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size(BoloPainter.anchoBase * escala, BoloPainter.altoBase * escala),
-      painter: BoloPainter(color: color),
+      painter: BoloPainter(color: color, numero: numero),
     );
   }
 }

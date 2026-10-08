@@ -23,9 +23,9 @@ class _InsertionSortState extends State<InsertionSort> {
 
   // Estado del algoritmo (para resaltar los bolos)
   bool _ordenando = false;
-  int _actual = -1;     // bolo que se está insertando
-  int _comparado = -1;  // bolo con el que se compara
-  int _fijos = 0;       // tamaño de la parte ya ordenada (al inicio)
+  int _actual = -1; // bolo que se está insertando
+  int _comparado = -1; // bolo con el que se compara
+  int _fijos = 0; // tamaño de la parte ya ordenada (al inicio)
 
   // Temporizador
   final Stopwatch _cronometro = Stopwatch();
@@ -138,6 +138,10 @@ class _InsertionSortState extends State<InsertionSort> {
     return Colors.white;
   }
 
+  // Convierte la escala del bolo en su número (1 = el más pequeño)
+  int _numeroDe(double escala) =>
+      ((escala - escalaInicial) / incremento).round() + 1;
+
   String get _tiempo {
     final ms = _cronometro.elapsedMilliseconds;
     final min = (ms ~/ 60000).toString().padLeft(2, '0');
@@ -194,6 +198,7 @@ class _InsertionSortState extends State<InsertionSort> {
                           child: Bolo(
                             escala: _escalas[idx],
                             color: _colorDe(idx),
+                            numero: _numeroDe(_escalas[idx]),
                           ),
                         ),
                     ],
