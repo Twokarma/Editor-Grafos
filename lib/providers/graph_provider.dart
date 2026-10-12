@@ -14,8 +14,20 @@ class GraphProvider extends ChangeNotifier{
   static const int _maxHistory = 20;
   final List<Graph> _history = [];
 
+  GraphProvider({Graph? initialGraph}) : _graph = initialGraph?? Graph();
+
   Graph graphGetter(){
     return _graph;
+  }
+
+  Graph snapshot(){
+    return _graph.clone();
+  }
+
+  void replaceGraph(Graph newGraph){
+    _pushHistory();
+    _graph = newGraph.clone();
+    notifyListeners();
   }
 
   void addNode(double x,double y){
@@ -56,8 +68,9 @@ class GraphProvider extends ChangeNotifier{
 
   void updateNode(String id,{String? newName, int? newColor}){
     _pushHistory();
-    renameNode(id, newName!);
-    recolorNode(id, newColor!);
+    _graph.renameNode(id, newName!);
+    _graph.recolorNode(id, newColor!);
+    notifyListeners();
   }
 
   void updateEdgeWeight(String id, double newWeight) {
@@ -80,7 +93,7 @@ class GraphProvider extends ChangeNotifier{
 
     _pushHistory();
     if(reverse != null && !directed) removeEdge(reverse.id);
-      addEdge(sourceNode, targetNode, weight, directed);
+    _graph.addEdge(sourceNode, targetNode, weight, directed: directed);
     notifyListeners();
     return true;
   }

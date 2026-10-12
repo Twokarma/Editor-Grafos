@@ -3,20 +3,30 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:graph_maker_app_2/models/app_viewport.dart';
 
 import '../providers/graph_provider.dart';
 import 'dialogs/edge_dialog.dart';
 import 'dialogs/edit_node_dialog.dart';
 import 'graph_painter.dart';
+import '../theme/app_colors.dart';
 
 class GraphWidget extends StatefulWidget{
-  const GraphWidget({super.key});
+  final Set<String> highlightedEdgeIds;
+  final Color highlightedColor;
+  final Map<String, double> holgura;
+  const GraphWidget({
+    super.key, this.highlightedEdgeIds = const <String>{},
+    this.highlightedColor = AppColors.assignmentEdge,
+    this.holgura = const <String, double>{}
+  });
 
   @override
   State<GraphWidget> createState() => _GraphWidgetState();
 }
 
 class _GraphWidgetState extends State<GraphWidget> {
+  AppViewport viewport = AppViewport();
   String sourceNode = "";
   Offset? currentDragPosition;
 
@@ -189,10 +199,14 @@ class _GraphWidgetState extends State<GraphWidget> {
           painter: GraphPainter(
             nodes: graphProvider.graphGetter().nodes,
             edges: graphProvider.graphGetter().edges,
+            highlightedEdgeIds: widget.highlightedEdgeIds,
+            highlightedColor: widget.highlightedColor,
+            holgura: widget.holgura,
             dragSourceId: sourceNode,
             dragCurrentPosition: currentDragPosition,
             movingNodeId: _isMovingNode ? _movingNodeId : null,
             movingNodePosition: _isMovingNode ? _movingNodeCurrentPosition : null,
+            viewport: viewport,
           ),
         ),
       ),

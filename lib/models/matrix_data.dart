@@ -5,6 +5,8 @@ class MatrixData{
   final List<Node> rowHeaders;
   final List<Node> colHeaders;
   final List<List<double>> matrix;
+  final List<List<bool>> hasEdge;
+  final List<List<String>> edgeIds;
   final List<double> rowSum;
   final List<double> colSum;
   final List<int> rowDegree;
@@ -15,6 +17,8 @@ class MatrixData{
     required this.rowHeaders,
     required this.colHeaders,
     required this.matrix,
+    required this.hasEdge,
+    required this.edgeIds,
     required this.rowSum,
     required this.colSum,
     required this.rowDegree,
