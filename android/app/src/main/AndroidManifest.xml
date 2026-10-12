@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="graph_maker_app_2"
+        android:label="Graph Editor"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
