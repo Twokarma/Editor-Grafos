@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/screens/insertion_sort.dart';
+import 'package:graph_maker_app_2/screens/merge_sort.dart';
+import 'package:graph_maker_app_2/screens/shell_sort.dart';
 
 import 'package:graph_maker_app_2/widgets/graph_canvas.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +56,22 @@ class GraphScreen extends StatelessWidget {
           iconColor: Colors.blueAccent,
         ),
       ),
+      PopupMenuItem(
+        value: 'shell',
+        child: ListTile(
+          leading: Icon(Icons.more_horiz_rounded),
+          title: Text("Shell sort"),
+          iconColor: Colors.blueAccent,
+        )
+      ),
+      PopupMenuItem(
+        value: 'merge',
+        child: ListTile(
+          leading: Icon(Icons.more_horiz_outlined),
+          title: Text("Merge sort"),
+          iconColor: Colors.blueAccent,
+        )
+      )
       // PopupMenuItem(value: 'otro', child: ...),
     ],
   );
@@ -68,6 +86,16 @@ class GraphScreen extends StatelessWidget {
     case 'insertion':
       Navigator.of(fabContext).push(
         MaterialPageRoute(builder: (_) => const InsertionSort()),
+      );
+      break;
+    case 'shell':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_)=> const ShellSort()),
+      );
+      break;
+    case 'merge':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_)=> const MergeSort()),
       );
       break;
   }
@@ -295,7 +323,7 @@ class GraphScreen extends StatelessWidget {
           Builder(
             builder: (fabContext) => FloatingActionButton(
               heroTag: "menuFab",
-              onPressed: () => _showSortMenu(fabContext),
+              onPressed: () => _showSortMenu(fabContext),          
               shape: const CircleBorder(),
               child: const Icon(Icons.more_horiz),
             ),
