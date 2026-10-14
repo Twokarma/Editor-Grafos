@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/screens/assignment_screen.dart';
 import 'package:graph_maker_app_2/screens/johnson_screen.dart';
+import 'package:graph_maker_app_2/screens/merge_sort.dart';
 import 'package:graph_maker_app_2/screens/selection_sort.dart';
+import 'package:graph_maker_app_2/screens/shell_sort.dart';
 
 import 'package:graph_maker_app_2/widgets/graph_canvas.dart';
 import 'package:provider/provider.dart';
@@ -56,6 +58,22 @@ class GraphScreen extends StatelessWidget {
             iconColor: Colors.blueAccent,
           ),
         ),
+         PopupMenuItem(
+        value: 'shell',
+        child: ListTile(
+          leading: Icon(Icons.more_horiz_rounded),
+          title: Text("Shell sort"),
+          iconColor: Colors.blueAccent,
+        )
+      ),
+      PopupMenuItem(
+        value: 'merge',
+        child: ListTile(
+          leading: Icon(Icons.more_horiz_outlined),
+          title: Text("Merge sort"),
+          iconColor: Colors.blueAccent,
+        )
+      )
         // PopupMenuItem(value: 'otro', child: ...),
       ],
     );
@@ -72,6 +90,16 @@ class GraphScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const InsertionSort()),
         );
         break;
+       case 'shell':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_)=> const ShellSort()),
+      );
+      break;
+    case 'merge':
+      Navigator.of(fabContext).push(
+        MaterialPageRoute(builder: (_)=> const MergeSort()),
+      );
+      break;
     }
   }
 
