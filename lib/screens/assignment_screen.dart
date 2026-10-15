@@ -14,6 +14,10 @@ import '../widgets/menu_option.dart';
 import 'chat_screen.dart';
 import 'matrix_screen.dart';
 
+// ★ AYUDA: imports nuevos
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import '../widgets/graph_tour.dart';
+
 
 class AssignmentScreen extends StatefulWidget{
   final GraphProvider mainProvider;
@@ -29,6 +33,35 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
   late String _lastAppliedJson;
 
   late final GraphProvider _copy;
+
+  // ★ AYUDA: keys de cada botón que explica el tour
+  final _publishKey = GlobalKey();
+  final _undoKey = GlobalKey();
+  final _menuKey = GlobalKey();
+  final _helpKey = GlobalKey();
+  final _matrixKey = GlobalKey();
+  final _minKey = GlobalKey();
+  final _maxKey = GlobalKey();
+
+  // ★ AYUDA: pasos del tour
+  void _startTour() {
+    GraphTour.show(context, [
+      TourStep(_publishKey, 'Aplicar al grafo principal',
+          'Envía los cambios de esta copia al grafo principal. Se activa solo cuando hay cambios.'),
+      TourStep(_undoKey, 'Deshacer',
+          'Revierte la última acción en esta copia del grafo.'),
+      TourStep(_menuKey, 'Más opciones',
+          'Guardar, abrir, limpiar el grafo o abrir el chat con el asistente.'),
+      TourStep(_matrixKey, 'Matriz M[x]', 'Abre la matriz de costos del grafo.',
+          align: ContentAlign.left),
+      TourStep(_minKey, 'Minimize',
+          'Calcula la asignación de menor costo total con el método húngaro.',
+          align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+      TourStep(_maxKey, 'Maximize',
+          'Calcula la asignación de mayor costo total.',
+          align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    ]);
+  }
 
   @override
   void initState(){
@@ -158,6 +191,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
               title: const Text("Assignment"),
               actions: [
                 IconButton(
+                  key: _publishKey, // ★ AYUDA
                   icon: const Icon(Icons.publish),
                   tooltip: "Apply to main graph",
                   onPressed: hasChanges ? () {
@@ -170,12 +204,22 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                 ),
 
                 IconButton(
+                  key: _undoKey, // ★ AYUDA
                   icon: const Icon(Icons.undo),
                   tooltip: "Undo",
                   onPressed: graphProviderCopy.canUndo ? () => graphProviderCopy.undo() : null,
                 ),
 
+                // ★ AYUDA: botón nuevo que lanza el tour
+                IconButton(
+                  key: _helpKey,
+                  icon: const Icon(Icons.help_outline),
+                  tooltip: "Help",
+                  onPressed: _startTour,
+                ),
+
                 PopupMenuButton<MenuOption>(
+                  key: _menuKey, // ★ AYUDA
                   onSelected: (option) => handleMenuSelection(context, option),
 
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<MenuOption>>[
@@ -218,6 +262,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
             ),
           body: GraphWidget(highlightedEdgeIds: buildSet()),
           floatingActionButton: FloatingActionButton(
+            key: _matrixKey, // ★ AYUDA
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => ChangeNotifierProvider.value(value: _copy, child: const MatrixScreen(),)),
@@ -238,6 +283,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                     children: [
                       Expanded(
                           child: FilledButton.icon(
+                              key: _minKey, // ★ AYUDA
                               onPressed: canSolve? () {
                                 _runAssignment(true);
                               } : null,
@@ -248,6 +294,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                       SizedBox(width: 8.0,),
                       Expanded(
                         child: FilledButton.icon(
+                          key: _maxKey, // ★ AYUDA
                           onPressed: canSolve? () {
                             _runAssignment(false);
                           } : null,

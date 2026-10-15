@@ -22,6 +22,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.themeSeed),
       ),
+      debugShowCheckedModeBanner: false,
+      debugShowMaterialGrid: false,
       home: const GraphScreen(),
     );
   }
