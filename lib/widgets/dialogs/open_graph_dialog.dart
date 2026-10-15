@@ -11,6 +11,7 @@ Future<void> showOpenDialog(BuildContext context, GraphProvider provider) async 
     context: context,
     builder: (dialogContext) {
       final localNames = List<String>.from(names);
+      String? error;
       return StatefulBuilder(
         builder: (dialogContext, setDialogState) {
           return AlertDialog(
@@ -22,29 +23,55 @@ Future<void> showOpenDialog(BuildContext context, GraphProvider provider) async 
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text("No saved graphs yet"),
               )
-                  : ListView.builder(
-                shrinkWrap: true,
-                itemCount: localNames.length,
-                itemBuilder: (context, index) {
-                  final name = localNames[index];
-                  return ListTile(
-                    title: Text(name),
-                    onTap: () async {
-                      await provider.loadGraph(name);
-                      if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-                    },
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: "Delete",
-                      onPressed: () async {
-                        await provider.deleteGraph(name);
-                        setDialogState(() {
-                          localNames.removeAt(index);
-                        });
-                      },
-                    ),
-                  );
-                },
+                  : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if(error != null)
+                        Text(
+                          error!,
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+
+                      Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: localNames.length,
+                            itemBuilder: (context, index) {
+                              final name = localNames[index];
+                              return ListTile(
+                                title: Text(name),
+                                onTap: () async {
+                                  String? message = await provider.loadGraph(name);
+                                  if(dialogContext.mounted){
+                                    if(message != null){
+                                      setDialogState(() {
+                                        error = message;
+                                      });
+                                    }else{
+                                      Navigator.of(dialogContext).pop();
+                                    }
+                                  }
+                                },
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: "Delete",
+                                  onPressed: () async {
+                                    await provider.deleteGraph(name);
+                                    if(dialogContext.mounted) {
+                                      setDialogState(() {
+                                        localNames.removeAt(index);
+                                        error = null;
+                                      });
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                      ),
+                    ],
               ),
             ),
             actions: [

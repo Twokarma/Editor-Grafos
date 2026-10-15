@@ -113,8 +113,9 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
   Widget build(BuildContext context){
     final graphProviderCopy = context.watch<GraphProvider>();
     final String currentGraph = jsonEncode(_copy.graphGetter().toJson());
+    final List<String> messages = _copy.validateGraph();
     final bool hasChanges = _lastAppliedJson != currentGraph;
-    final bool canSolve = _copy.graphGetter().edges.isNotEmpty;
+    final bool canSolve = _copy.graphGetter().edges.isNotEmpty && messages.isEmpty;
     final result = _lastResult;
     final matrix = _lastMatrix;
 
@@ -218,11 +219,11 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
             ),
           body: GraphWidget(highlightedEdgeIds: buildSet()),
           floatingActionButton: FloatingActionButton(
-            onPressed: () {
+            onPressed: messages.isEmpty? () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => ChangeNotifierProvider.value(value: _copy, child: const MatrixScreen(),)),
               );
-            },
+            } : null,
             shape: const CircleBorder(),
             child: const Text(
               "M[x]",
@@ -234,29 +235,41 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
           bottomNavigationBar: SafeArea(
               child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                          child: FilledButton.icon(
+                      if(messages.isNotEmpty)
+                        Text(
+                          messages.first,
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
                               onPressed: canSolve? () {
                                 _runAssignment(true);
                               } : null,
                               icon: const Icon(Icons.trending_down),
                               label: Text('Minimize'),
+                            ),
                           ),
-                      ),
-                      SizedBox(width: 8.0,),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: canSolve? () {
-                            _runAssignment(false);
-                          } : null,
-                          icon: const Icon(Icons.trending_up),
-                          label: Text('Maximize'),
-                        ),
+                          SizedBox(width: 8.0,),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: canSolve? () {
+                                _runAssignment(false);
+                              } : null,
+                              icon: const Icon(Icons.trending_up),
+                              label: Text('Maximize'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
+                  )
               )
           ),
         )

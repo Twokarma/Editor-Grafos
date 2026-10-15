@@ -79,12 +79,8 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
       _fail("There are no edges");
       return;
     }
-    for(Edge edge in edges){
-      if(edge.sourceNodeId == edge.targetNodeId || !edge.directed){
-        _fail("Self loop or No directed edge");
-        return;
-      }
-    }
+    List<String> messages = _copy.validateGraph();
+    if(messages.isNotEmpty) _fail(messages.first);
 
     Map<String, int> index = {};
     for(int i = 0; i < nodes.length; i++){
@@ -97,6 +93,9 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
       nodesFrom.add(edge.sourceNodeId);
       nodesTo.add(edge.targetNodeId);
     }
+
+    nodesFrom = nodesFrom.difference(nodesTo);
+    nodesTo = nodesTo.difference(nodesFrom);
 
     if(nodesFrom.isEmpty || nodesTo.isEmpty){
       setState(() {

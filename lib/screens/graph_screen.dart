@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:graph_maker_app_2/rules/assignment_rules.dart';
+import 'package:graph_maker_app_2/rules/graph_rules.dart';
+import 'package:graph_maker_app_2/rules/johnson_rules.dart';
 import 'package:graph_maker_app_2/screens/assignment_screen.dart';
 import 'package:graph_maker_app_2/screens/johnson_screen.dart';
 import 'package:graph_maker_app_2/screens/selection_sort.dart';
@@ -79,7 +82,9 @@ class GraphScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final graphProvider = context.watch<GraphProvider>();
 
-    GraphProvider copyProvider(BuildContext context) => GraphProvider(initialGraph: graphProvider.snapshot());
+    GraphProvider Function(BuildContext) createProvider(GraphRules rules) {
+      return (BuildContext context) => GraphProvider(initialGraph: graphProvider.snapshot(), graphRules: rules);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -125,7 +130,7 @@ class GraphScreen extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => ChangeNotifierProvider<GraphProvider>(
-                  create: copyProvider  ,
+                  create: createProvider(JohnsonRules())  ,
                   child: JohnsonScreen(mainProvider: graphProvider),
                 )
                 ),
@@ -146,7 +151,7 @@ class GraphScreen extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => ChangeNotifierProvider<GraphProvider>(
-                    create: copyProvider  ,
+                    create: createProvider(AssignmentRules())  ,
                     child: AssignmentScreen(mainProvider: graphProvider),
                 )
                 ),

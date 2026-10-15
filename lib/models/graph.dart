@@ -47,22 +47,12 @@ class Graph {
     return radius + selfLoopRadius - overLapDistance;
   }
 
-  bool moveNode(String id, double x, double y){
+  void moveNode(String id, double x, double y){
     final node = nodes[id];
-    if (node == null) return false;
-
-    for (final entry in nodes.entries) {
-      if (entry.key == id) continue;
-      final dx = entry.value.x - x;
-      final dy = entry.value.y - y;
-      if ((dx * dx + dy * dy) <= (radius + radius + 3) * (radius + radius + 3)) {
-        return false;
-      }
-    }
+    if (node == null) return;
 
     node.x = x;
     node.y = y;
-    return true;
   }
 
   Node? findNode(String id){
@@ -78,8 +68,6 @@ class Graph {
       if( d <= (radius+radius+3) * (radius+radius+3)) {
         if( d <= radius * radius) {
           nodeId = id;
-        } else {
-          nodeId = "tooClose";
         }
       }
     });

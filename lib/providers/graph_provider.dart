@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/models/graph.dart';
+import 'package:graph_maker_app_2/rules/graph_rules.dart';
 import 'package:graph_maker_app_2/services/graph_storage_service.dart';
 
 import '../models/edge.dart';
@@ -13,8 +14,9 @@ class GraphProvider extends ChangeNotifier{
   final GraphStorageService _storage = GraphStorageService();
   static const int _maxHistory = 20;
   final List<Graph> _history = [];
+  final GraphRules rules;
 
-  GraphProvider({Graph? initialGraph}) : _graph = initialGraph?? Graph();
+  GraphProvider({Graph? initialGraph, GraphRules? graphRules}) : _graph = initialGraph?? Graph(), rules = graphRules?? DefaultRules();
 
   Graph graphGetter(){
     return _graph;
@@ -30,28 +32,42 @@ class GraphProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  void addNode(double x,double y){
+  String? addNode(double x,double y){
+    String? message = rules.checkAddNode(_graph, x, y);
+    if(message != null) return message;
     _pushHistory();
     _graph.addNode(x, y);
     notifyListeners();
+    return null;
   }
 
-  void removeNode(String id){
+  String? removeNode(String id){
+    String? message = rules.checkRemoveNode(_graph, id);
+    if(message != null) return message;
     _pushHistory();
     _graph.removeNode(id);
     notifyListeners();
+    return null;
   }
 
-  void addEdge(String sourceNode,String targetNode, double weight, bool directed) {
+  String? addEdge(String sourceNode,String targetNode, double weight, bool directed) {
+    String? message = rules.checkAddEdge(_graph, sourceNode, targetNode, directed);
+    if(message != null) return message;
     _pushHistory();
+    Edge? reverse = _graph.findReverseEdge(sourceNode, targetNode);
+    if(reverse != null && !directed) _graph.removeEdge(reverse.id);
     _graph.addEdge(sourceNode, targetNode, weight, directed: directed);
     notifyListeners();
+    return null;
   }
 
-  void removeEdge(String id){
+  String? removeEdge(String id){
+    String? message = rules.checkRemoveEdge(_graph, id);
+    if(message != null) return message;
     _pushHistory();
     _graph.removeEdge(id);
     notifyListeners();
+    return null;
   }
 
   void renameNode(String id, String newName){
@@ -87,15 +103,12 @@ class GraphProvider extends ChangeNotifier{
     return _graph.findReverseEdge(sourceNode, targetNode);
   }
 
-  bool addEdgeResolvingReverseConflict(String sourceNode, String targetNode, double weight, {required bool directed}) {
-    final reverse = findReverseEdge(sourceNode, targetNode);
-    if(reverse != null && !reverse.directed) return false;
+  String? checkEdgeEndpoints(String sourceId, String targetId){
+    return rules.checkEdgeEndpoints(_graph, sourceId, targetId);
+  }
 
-    _pushHistory();
-    if(reverse != null && !directed) removeEdge(reverse.id);
-    _graph.addEdge(sourceNode, targetNode, weight, directed: directed);
-    notifyListeners();
-    return true;
+  List<String> validateGraph(){
+    return rules.validateGraph(_graph);
   }
 
   List<List<double>> adjacencyMatrix(MatrixData matrixData){
@@ -110,12 +123,13 @@ class GraphProvider extends ChangeNotifier{
     return jsonEncode(_graph.toSummaryMap());
   }
 
-  bool moveNode(String id, double x, double y){
+  String? moveNode(String id, double x, double y){
+    String? message = rules.checkMoveNode(_graph, id, x, y);
+    if(message != null) return message;
     _pushHistory();
-    bool move = _graph.moveNode(id, x, y);
-    if(!move) _history.removeLast();
+    _graph.moveNode(id, x, y);
     notifyListeners();
-    return move;
+    return null;
   }
 
   String findNodeAt(double x, double y) {
@@ -155,12 +169,16 @@ class GraphProvider extends ChangeNotifier{
    await _storage.save(name, _graph.toJson());
   }
 
-  Future<void> loadGraph(String name) async{
+  Future<String?> loadGraph(String name) async{
     final json = await _storage.load(name);
-    if(json == null) return;
+    if(json == null) return "Graph not found";
+    Graph newGraph = Graph.fromJson(json);
+    List<String> messages = rules.validateGraph(newGraph);
+    if(messages.isNotEmpty) return messages.first;
     _pushHistory();
-    _graph = Graph.fromJson(json);
+    _graph = newGraph;
     notifyListeners();
+    return null;
   }
 
   Future<void> deleteGraph(String name) async {

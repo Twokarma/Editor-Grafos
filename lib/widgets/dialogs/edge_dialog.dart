@@ -11,6 +11,7 @@ void showEdgeDialog(
     }) {
   final controller = TextEditingController();
   bool isDirected = true;
+  bool onlyDirected = provider.rules.forcesDirected();
 
   showDialog(
     context: context,
@@ -22,24 +23,30 @@ void showEdgeDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ToggleButtons(
-                  isSelected: [isDirected, !isDirected],
-                  onPressed: (index) {
-                    setDialogState(() {
-                      isDirected = index == 0;
-                    });
-                  },
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text("Directed"),
+                Visibility(
+                    visible: !onlyDirected,
+                    maintainSize: false,
+                    maintainState: true,
+                    child: ToggleButtons(
+                      isSelected: [isDirected, !isDirected],
+                      onPressed: (index) {
+                        setDialogState(() {
+                          isDirected = index == 0;
+                        });
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text("Directed"),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text("Non-directed"),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text("Non-directed"),
-                    ),
-                  ],
                 ),
+                
                 const SizedBox(height: 12),
                 TextField(
                   controller: controller,
@@ -58,16 +65,16 @@ void showEdgeDialog(
                 onPressed: () {
                   final weight = double.tryParse(controller.text);
                   if (weight != null) {
-                    final added = provider.addEdgeResolvingReverseConflict(
+                    final message = provider.addEdge(
                       source,
                       target,
                       weight,
-                      directed: isDirected,
+                      isDirected,
                     );
                     Navigator.of(dialogContext).pop();
-                    if (!added) {
+                    if (message != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("An edge already exists between these nodes")),
+                        SnackBar(content: Text(message)),
                       );
                     }
                   }

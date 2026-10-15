@@ -63,7 +63,7 @@ class _GraphWidgetState extends State<GraphWidget> {
 
         final provider = context.read<GraphProvider>();
         String tap = provider.findNodeAt(details.localPosition.dx, details.localPosition.dy);
-        if (tap == "" || tap == "tooClose") {
+        if (tap == "") {
           setState(() => sourceNode = "");
           return;
         }
@@ -112,9 +112,9 @@ class _GraphWidgetState extends State<GraphWidget> {
           final provider = context.read<GraphProvider>();
           final target = _movingNodeCurrentPosition!;
           final moved = provider.moveNode(_movingNodeId, target.dx, target.dy);
-          if (!moved) {
+          if (moved != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Can't move a node that close to another")),
+              SnackBar(content: Text(moved)),
             );
           }
           setState(() {
@@ -131,13 +131,12 @@ class _GraphWidgetState extends State<GraphWidget> {
         final provider = context.read<GraphProvider>();
         String tap = provider.findNodeAt(currentDragPosition!.dx, currentDragPosition!.dy);
 
-        if (tap != "" && tap != "tooClose") {
-          final reverseEdge = provider.findReverseEdge(sourceNode, tap);
-          final blockedByNonDirectedReverse = reverseEdge != null && !reverseEdge.directed;
+        if (tap != "") {
+          String? message = provider.checkEdgeEndpoints(sourceNode, tap);
 
-          if (provider.edgeExists(sourceNode, tap) || blockedByNonDirectedReverse) {
+          if (message != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("An edge already exists between these nodes")),
+              SnackBar(content: Text(message)),
             );
           } else {
             showEdgeDialog(context, provider, source: sourceNode, target: tap);
@@ -164,11 +163,21 @@ class _GraphWidgetState extends State<GraphWidget> {
       onDoubleTapDown: ((details) {
         final graphProvider = context.read<GraphProvider>();
         String tap = graphProvider.findNodeAt(details.localPosition.dx, details.localPosition.dy);
-        if(tap != "" && tap != "tooClose") {
-          graphProvider.removeNode(tap);
+        if(tap != "") {
+          String? message = graphProvider.removeNode(tap);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message!)),
+          );
         } else {
           String edgeTap = graphProvider.findEdgeAt(details.localPosition.dx, details.localPosition.dy);
-          if(edgeTap != "") graphProvider.removeEdge(edgeTap);
+          if(edgeTap != ""){
+            String? message = graphProvider.removeEdge(edgeTap);
+            if(message != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message)),
+              );
+            }
+          }
         }
       }),
 
@@ -181,15 +190,15 @@ class _GraphWidgetState extends State<GraphWidget> {
         final graphProvider = context.read<GraphProvider>();
         String tap = graphProvider.findNodeAt(details.localPosition.dx, details.localPosition.dy);
 
-        if (tap == "tooClose") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Can't create a node that close to another")),
-          );
+
+        if(tap != ""){
+          showEditNodeDialog(context, graphProvider, tap);
         } else {
-          if(tap != ""){
-            showEditNodeDialog(context, graphProvider, tap);
-          } else {
-            graphProvider.addNode(details.localPosition.dx, details.localPosition.dy);
+          String? message = graphProvider.addNode(details.localPosition.dx, details.localPosition.dy);
+          if(message != null){
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message)),
+            );
           }
         }
       }),
