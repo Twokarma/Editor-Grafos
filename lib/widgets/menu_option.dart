@@ -1,1 +1,1 @@
-enum MenuOption {save, open, clear, chat}
+enum MenuOption {save, open, clear, chat, manual}

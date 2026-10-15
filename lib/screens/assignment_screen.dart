@@ -18,7 +18,7 @@ import 'matrix_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../widgets/graph_tour.dart';
 
-
+import 'pdf_viewer_screen.dart';
 class AssignmentScreen extends StatefulWidget{
   final GraphProvider mainProvider;
   const AssignmentScreen({super.key, required this.mainProvider});
@@ -110,9 +110,10 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
               child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ConstrainedBox(
+                    // ★ CORRECCIÓN: se usa ctx (el contexto del bottom sheet) en lugar del de la pantalla
                     constraints: BoxConstraints(
-                        maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-                        maxWidth: MediaQuery.sizeOf(context).width * 0.5),
+                        maxHeight: MediaQuery.sizeOf(ctx).height * 0.6,
+                        maxWidth: MediaQuery.sizeOf(ctx).width * 0.5),
                     child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -128,9 +129,9 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                               shrinkWrap: true,
                             ),
                           ),
-                          Divider(),
+                          const Divider(),
                           ListTile(
-                            title: Text('Total:'),
+                            title: const Text('Total:'),
                             trailing: Text(result.totalCost.toString()),
                           )
                         ],
@@ -178,12 +179,17 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
             MaterialPageRoute(builder: (_) => ChangeNotifierProvider.value(value: _copy, child: const ChatScreen(),)),
           );
           break;
+        // ★ CORRECCIÓN: faltaba este caso; el switch no era exhaustivo y la opción "Manual" no hacía nada
+       case MenuOption.manual:
+  openManual(context);
+  break;
       }
     }
 
     return PopScope(
         canPop: !hasChanges,
-        onPopInvokedWithResult: ((didPop, result) {
+        // ★ CORRECCIÓN: el parámetro se renombra a "_" para no ocultar la variable "result" de arriba
+        onPopInvokedWithResult: ((didPop, _) {
           if(didPop) return;
           showConfirmExitCopyDialog(context, widget.mainProvider, _copy);
         }),
@@ -200,7 +206,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                     setState((){
                       _lastAppliedJson = currentGraph;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Graph Updated'),));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Graph Updated'),));
                   } : null,
                 ),
 
@@ -256,6 +262,14 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
+                    const PopupMenuItem<MenuOption>(
+                      value: MenuOption.manual,
+                      child: ListTile(
+                        leading: Icon(Icons.help_outline),
+                        title: Text('Manual'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
                   ],
                 ),
 
@@ -299,10 +313,10 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                                 _runAssignment(true);
                               } : null,
                               icon: const Icon(Icons.trending_down),
-                              label: Text('Minimize'),
+                              label: const Text('Minimize'),
                             ),
                           ),
-                          SizedBox(width: 8.0,),
+                          const SizedBox(width: 8.0,),
                           Expanded(
                             child: FilledButton.icon(
                               key: _maxKey, // ★ AYUDA
@@ -310,7 +324,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                                 _runAssignment(false);
                               } : null,
                               icon: const Icon(Icons.trending_up),
-                              label: Text('Maximize'),
+                              label: const Text('Maximize'),
                             ),
                           ),
                         ],

@@ -19,6 +19,7 @@ import '../widgets/graph_tour.dart';
 import 'chat_screen.dart';
 import 'insertion_sort.dart';
 import 'matrix_screen.dart';
+import 'pdf_viewer_screen.dart'; // ★ MANUAL: openManual()
 
 class GraphScreen extends StatefulWidget {
   const GraphScreen({super.key});
@@ -34,6 +35,7 @@ class _GraphScreenState extends State<GraphScreen> {
   final _openKey = GlobalKey();
   final _chatKey = GlobalKey();
   final _helpKey = GlobalKey();
+  final _manualKey = GlobalKey(); // ★ MANUAL
   final _johnsonKey = GlobalKey();
   final _hungarianKey = GlobalKey();
   final _matrixKey = GlobalKey();
@@ -48,6 +50,8 @@ class _GraphScreenState extends State<GraphScreen> {
       TourStep(_saveKey, 'Guardar', 'Guarda el grafo para usarlo después.'),
       TourStep(_openKey, 'Abrir', 'Carga un grafo guardado previamente.'),
       TourStep(_chatKey, 'Asistente IA', 'Abre el chat con el asistente.'),
+      // ★ MANUAL
+      TourStep(_manualKey, 'Manual', 'Abre la guía rápida de la aplicación.'),
       TourStep(
         _johnsonKey,
         'Johnson (J)',
@@ -205,6 +209,13 @@ class _GraphScreenState extends State<GraphScreen> {
                 MaterialPageRoute(builder: (_) => const ChatScreen()),
               );
             },
+          ),
+          // ★ MANUAL: abre graph_maker_guia_rapida.pdf
+          IconButton(
+            key: _manualKey,
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: "Manual",
+            onPressed: () => openManual(context),
           ),
           IconButton(
             key: _helpKey,
