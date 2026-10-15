@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:graph_maker_app_2/screens/graph_screen.dart';
-import 'package:graph_maker_app_2/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'providers/graph_provider.dart';
+import 'screens/home.dart';
+
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => GraphProvider(),
+      create: (_) => GraphProvider(),   // tu constructor actual
       child: const MyApp(),
     ),
   );
@@ -18,11 +18,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Graph Editor',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.themeSeed),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        useMaterial3: true,
       ),
-      home: const GraphScreen(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),   // ← antes era GraphScreen()
+      debugShowCheckedModeBanner: false,
+      debugShowMaterialGrid: false,
     );
   }
 }
