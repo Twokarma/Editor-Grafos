@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:graph_maker_app_2/models/app_viewport.dart';
 
+import '../models/assignment_overlay.dart';
 import '../models/edge.dart';
 import '../models/graph.dart';
 import '../models/node.dart';
@@ -18,9 +19,13 @@ class GraphPainter extends CustomPainter{
   final String? movingNodeId;
   final Offset? movingNodePosition;
   final AppViewport viewport;
+  final List<GhostNode> ghostNodes;
+  final List<GhostEdge> ghostEdges;
 
 
   GraphPainter({
+    this.ghostNodes = const [],
+    this.ghostEdges = const [],
     required this.nodes,
     required this.edges,
     this.highlightedEdgeIds = const {},
@@ -44,6 +49,7 @@ class GraphPainter extends CustomPainter{
   static const double _arrowWidth = 8;
   static const double _labelOffset = 14;
   static const double _parallelEdgeOffset = 7.5;
+  static const double _labelGap = 8;
 
   void _drawArrowhead(Canvas canvas, Offset tip, double ux, double uy, Color color) {
     final backPoint = Offset(
@@ -97,6 +103,105 @@ class GraphPainter extends CustomPainter{
     canvas.drawCircle(loopCenter, Graph.selfLoopRadius, paint);
   }
 
+  static const double _dashLength = 8;
+  static const double _dashGap = 6;
+
+  void _drawDashedLine(Canvas canvas, Offset from, Offset to, Paint paint) {
+    final total = (to - from).distance;
+    if (total == 0) return;
+    final dir = (to - from) / total;
+    for (double d = 0; d < total; d += _dashLength + _dashGap) {
+      final end = min(d + _dashLength, total);
+      canvas.drawLine(from + dir * d, from + dir * end, paint);
+    }
+  }
+
+  void _drawGhostEdges(Canvas canvas) {
+    final ghostById = {for (final g in ghostNodes) g.id: g};
+
+    (Offset, double)? endpoint(String id) {
+      final real = nodes[id];
+      if (real != null) return (_positionOf(real), real.radius);
+      final ghost = ghostById[id];
+      if (ghost != null) return (Offset(ghost.x, ghost.y), ghost.radius);
+      return null;
+    }
+
+    final ordered = [
+      ...ghostEdges.where((e) => !e.assigned),
+      ...ghostEdges.where((e) => e.assigned),
+    ];
+
+    for (final edge in ordered) {
+      final source = endpoint(edge.sourceId);
+      final target = endpoint(edge.targetId);
+      if (source == null || target == null) continue;
+
+      final sourcePos = source.$1;
+      final targetPos = target.$1;
+      final distance = (targetPos - sourcePos).distance;
+      if (distance == 0) continue;
+      final ux = (targetPos.dx - sourcePos.dx) / distance;
+      final uy = (targetPos.dy - sourcePos.dy) / distance;
+      final tip = Offset(targetPos.dx - ux * target.$2, targetPos.dy - uy * target.$2);
+
+      final color = edge.noEdge
+          ? AppColors.noEdgeAssignment
+          : edge.assigned ? highlightedColor : AppColors.ghostEdge;
+      final paint = Paint()
+        ..color = color
+        ..strokeWidth = edge.assigned ? 6.0 : 2.0;
+
+      _drawDashedLine(canvas, sourcePos, tip, paint);
+      _drawArrowhead(canvas, tip, ux, uy, color);
+
+      final midX = (sourcePos.dx + tip.dx) / 2 - uy * _labelOffset;
+      final midY = (sourcePos.dy + tip.dy) / 2 + ux * _labelOffset;
+      final label = TextPainter(
+        text: TextSpan(
+          text: edge.noEdge ? "no edge" : "${edge.weight}",
+          style: TextStyle(
+            color: color,
+            fontSize: edge.assigned ? 15 : 12,
+            fontWeight: edge.assigned ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      label.layout();
+      label.paint(canvas, Offset(midX - label.width / 2, midY - label.height / 2));
+    }
+  }
+
+  void _drawGhostNodes(Canvas canvas) {
+    final border = Paint()
+      ..color = AppColors.ghostNodeBorder
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (final ghost in ghostNodes) {
+      final pos = Offset(ghost.x, ghost.y);
+      canvas.drawCircle(pos, ghost.radius, Paint()..color = AppColors.ghostNode);
+
+      const dashes = 16;
+      const sweep = 2 * pi / dashes;
+      final rect = Rect.fromCircle(center: pos, radius: ghost.radius);
+      for (int i = 0; i < dashes; i++) {
+        canvas.drawArc(rect, i * sweep, sweep * 0.6, false, border);
+      }
+
+      final label = TextPainter(
+        text: TextSpan(
+          text: ghost.name,
+          style: const TextStyle(color: AppColors.darkNodeLabel, fontSize: 15),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      label.layout();
+      label.paint(canvas, Offset(pos.dx - label.width / 2, pos.dy - label.height / 2));
+    }
+  }
+
 
 
   @override
@@ -134,7 +239,7 @@ class GraphPainter extends CustomPainter{
       Node? targetNode = nodes[edge.targetNodeId];
       if (sourceNode == null || targetNode == null) return;
 
-      if (edge.sourceNodeId == edge.targetNodeId) {
+      if (edge.isLoop()) {
         final pos = _positionOf(sourceNode);
         final edgeColor = highlightedEdgeIds.contains(id)? highlightedColor : AppColors.selfLoopEdge;
         final stroke = highlightedEdgeIds.contains(id)? 8.0 : 5.0;
@@ -200,6 +305,8 @@ class GraphPainter extends CustomPainter{
       label.paint(canvas, Offset(midX - label.width / 2, midY - label.height / 2));
     });
 
+    _drawGhostEdges(canvas);
+
     if(dragSourceId != "" && dragSourceId != "tooClose" && dragCurrentPosition != null) {
       final dragSource = nodes[dragSourceId];
       if (dragSource != null) {
@@ -226,6 +333,8 @@ class GraphPainter extends CustomPainter{
       label.layout();
       label.paint(canvas, Offset(pos.dx-10, pos.dy-10));
     });
+
+    _drawGhostNodes(canvas);
 
     //canvas.restore();
   }

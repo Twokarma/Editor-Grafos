@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/algorithms/hungarian_assignment.dart';
+import 'package:graph_maker_app_2/models/assignment_overlay.dart';
 import 'package:graph_maker_app_2/models/matrix_data.dart';
 import 'package:graph_maker_app_2/providers/graph_provider.dart';
 import 'package:graph_maker_app_2/services/assignment_service.dart';
@@ -29,7 +30,7 @@ class AssignmentScreen extends StatefulWidget{
 
 class _AssignmentScreenState extends State<AssignmentScreen>{
   HungarianResult? _lastResult;
-  MatrixData? _lastMatrix;
+  AssignmentOverlay? _lastOverlay;
   late String _lastAppliedJson;
 
   late final GraphProvider _copy;
@@ -76,7 +77,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
     if(_lastResult == null) return;
     setState(()   {
       _lastResult = null;
-      _lastMatrix = null;
+      _lastOverlay = null;
     });
   }
 
@@ -88,17 +89,23 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
 
   void _runAssignment(bool min){
     MatrixData matrix = _copy.buildMatrixData();
-    HungarianResult result = AssignmentService(matrix: matrix, mode: min).run();
+    AssignmentService service = AssignmentService(matrix: matrix, mode: min);
+    HungarianResult result = service.run();
+    AssignmentOverlay overlay = service.buildOverlay(result);
     setState(() {
       _lastResult = result;
-      _lastMatrix = matrix;
+      _lastOverlay = overlay;
     });
 
-    List<(String, String, double)> assigned = [];
-    for(int i = 0; i < result.assignment.length; i++){
-      int j = result.assignment[i];
-      if(j != -1){
-        assigned.add((matrix.rowHeaders[i].name, matrix.colHeaders[j].name, matrix.matrix[i][j]));
+    final List<AssignmentPair> assigned = overlay.pairs;
+    String pairValue(AssignmentPair pair){
+      switch(pair.kind){
+        case AssignmentPairKind.real:
+          return pair.weight.toString();
+        case AssignmentPairKind.dummy:
+          return "${pair.weight} (dummy)";
+        case AssignmentPairKind.noEdge:
+          return "(no edge)";
       }
     }
 
@@ -121,8 +128,8 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
                               itemCount: assigned.length,
                               itemBuilder: (BuildContext context, int i){
                                 return ListTile(
-                                  title: Text("${assigned[i].$1} -> ${assigned[i].$2}"),
-                                  trailing: Text(assigned[i].$3.toString()),
+                                  title: Text("${assigned[i].sourceName} -> ${assigned[i].targetName}"),
+                                  trailing: Text(pairValue(assigned[i])),
                                 );
                               },
                               shrinkWrap: true,
@@ -149,18 +156,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
     final List<String> messages = _copy.validateGraph();
     final bool hasChanges = _lastAppliedJson != currentGraph;
     final bool canSolve = _copy.graphGetter().edges.isNotEmpty && messages.isEmpty;
-    final result = _lastResult;
-    final matrix = _lastMatrix;
-
-    Set<String> buildSet(){
-      if(result == null || matrix == null) return <String>{};
-      Set<String> highlightedEdgeIds = {};
-      for(int i = 0; i < result.assignment.length; i++){
-        int j = result.assignment[i];
-        if(j != -1) highlightedEdgeIds.add(matrix.edgeIds[i][j]);
-      }
-      return highlightedEdgeIds;
-    }
+    final overlay = _lastOverlay;
 
     void handleMenuSelection(BuildContext context, MenuOption option){
       switch(option){
@@ -261,12 +257,16 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
 
               ],
             ),
-          body: GraphWidget(highlightedEdgeIds: buildSet()),
+          body: GraphWidget(
+            highlightedEdgeIds: overlay?.highlightedEdgeIds ?? const <String>{},
+            ghostNodes: overlay?.nodes ?? const [],
+            ghostEdges: overlay?.edges ?? const [],
+          ),
           floatingActionButton: FloatingActionButton(
             key: _matrixKey, // ★ AYUDA
             onPressed: messages.isEmpty? () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => ChangeNotifierProvider.value(value: _copy, child: const MatrixScreen(),)),
+                MaterialPageRoute(builder: (_) => ChangeNotifierProvider.value(value: _copy, child: const MatrixScreen(square: true),)),
               );
             } : null,
             shape: const CircleBorder(),

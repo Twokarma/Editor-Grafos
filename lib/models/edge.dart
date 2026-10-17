@@ -9,4 +9,5 @@ class Edge {
 
   Edge(this.id, this.sourceNodeId, this.targetNodeId, this.weight, this.directed);
 
+  bool isLoop () => sourceNodeId == targetNodeId;
 }

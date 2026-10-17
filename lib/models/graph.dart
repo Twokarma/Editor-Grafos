@@ -13,6 +13,7 @@ class Graph {
   double radius = 30;
   static const double selfLoopRadius = 20;
   static const int overLapDistance = 10;
+  static const double _parallelEdgeOffset = 7.5;
 
   void addNode(double x,double y) {
     String id = "n$currentNode";
@@ -88,7 +89,7 @@ class Graph {
     edges.forEach((id, edge){
       Node sourceNode = nodes[edge.sourceNodeId]!;
       Node targetNode = nodes[edge.targetNodeId]!;
-      if(sourceNode.id == targetNode.id){
+      if(edge.isLoop()){
         Offset loopEdgeCenter = Offset(sourceNode.x + selfLoopCenterDistance(sourceNode.radius), sourceNode.y);
         double dx = loopEdgeCenter.dx - x;
         double dy = loopEdgeCenter.dy - y;
@@ -96,7 +97,23 @@ class Graph {
         if((d - selfLoopRadius).abs() <= tolerance) edgeId = id;
       }
 
-      if(_distanceToSegment(x, y, sourceNode.x, sourceNode.y, targetNode.x, targetNode.y) <= tolerance*tolerance) edgeId = id;
+      final dx = targetNode.x - sourceNode.x;
+      final dy = targetNode.y - sourceNode.y;
+      final distance = sqrt(dx * dx + dy * dy);
+
+      final ux = dx / distance;
+      final uy = dy / distance;
+      final perpX = -uy ;
+      final perpY = ux;
+
+      final hasMirror = edges.values.any((e) =>
+      e.sourceNodeId == edge.targetNodeId && e.targetNodeId == edge.sourceNodeId);
+      final lineOffset = hasMirror ? _parallelEdgeOffset : 0.0;
+
+      final offsetSourcePos = Offset(sourceNode.x + perpX * lineOffset, sourceNode.y + perpY * lineOffset);
+      final offsetTargetPos = Offset(targetNode.x + perpX * lineOffset, targetNode.y + perpY * lineOffset);
+
+      if(_distanceToSegment(x, y, offsetSourcePos.dx, offsetSourcePos.dy, offsetTargetPos.dx, offsetTargetPos.dy) <= tolerance*tolerance) edgeId = id;
     });
     return edgeId;
   }
@@ -257,7 +274,7 @@ class Graph {
       edgeIds[i][j] = id;
       rowDegree[i] += 1;
       colDegree[j] += 1;
-      if(!edge.directed && edge.sourceNodeId != edge.targetNodeId){
+      if(!edge.directed && !edge.isLoop()){
         i = rowIndex[edge.targetNodeId]!;
         j = colIndex[edge.sourceNodeId]!;
         matrix[i][j] = edge.weight;
@@ -295,6 +312,7 @@ class Graph {
  List<List<double>> adjacencyMatrix(MatrixData matrixData){
     return matrixData.matrix;
  }
+
   String generateNodeName(){
     List<int> stack = [];
     int id = currentNode + 1;
@@ -331,6 +349,4 @@ class Graph {
     });
     return exists;
   }
-
-
 }

@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/matrix_data.dart';
+import '../models/node.dart';
+import '../services/assignment_service.dart';
 import '../providers/graph_provider.dart';
 import '../theme/app_colors.dart';
 
 class MatrixScreen extends StatelessWidget {
-  const MatrixScreen({super.key});
+  final bool square;
+  const MatrixScreen({super.key, this.square = false});
 
   String _fmt(double v) {
     if (v == v.roundToDouble()) return v.toInt().toString();
     return v.toStringAsFixed(2);
   }
+
+  Color _headerColor(Node node) =>
+      AssignmentService.isDummy(node) ? AppColors.ghostNodeBorder : AppColors.headerBk;
 
   Widget _cell(String text, {bool header = false, Color? background}) {
     return Container(
@@ -34,7 +40,8 @@ class MatrixScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final graphProvider = context.watch<GraphProvider>();
-    final MatrixData data = graphProvider.buildMatrixData();
+    final MatrixData raw = graphProvider.buildMatrixData();
+    final MatrixData data = square ? AssignmentService.padToSquare(raw) : raw;
     final n = data.nodes.length;
     final r = data.rowHeaders.length;
     final c = data.colHeaders.length;
@@ -46,14 +53,14 @@ class MatrixScreen extends StatelessWidget {
 
     rows.add(TableRow(children: [
       _cell("", background: headerBg),
-      for (final node in data.colHeaders) _cell(node.name, header: true, background: headerBg),
+      for (final node in data.colHeaders) _cell(node.name, header: true, background: _headerColor(node)),
       _cell("Attributes\nleaving", header: true, background: headerBg),
       _cell("Grade", header: true, background: headerBg),
     ]));
 
     for (int i = 0; i < r; i++) {
       rows.add(TableRow(children: [
-        _cell(data.rowHeaders[i].name, header: true, background: headerBg),
+        _cell(data.rowHeaders[i].name, header: true, background: _headerColor(data.rowHeaders[i])),
         for (int j = 0; j < c; j++) _cell(_fmt(data.matrix[i][j])),
         _cell(_fmt(data.rowSum[i]), background: summaryBg),
         _cell(data.rowDegree[i].toString(), background: summaryBg),

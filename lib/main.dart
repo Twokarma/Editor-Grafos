@@ -6,7 +6,7 @@ import 'screens/home.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (_) => GraphProvider(),   // tu constructor actual
+      create: (_) => GraphProvider(),   // constructor actual
       child: const MyApp(),
     ),
   );

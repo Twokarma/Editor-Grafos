@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:graph_maker_app_2/providers/graph_provider.dart';
+import 'package:graph_maker_app_2/rules/assignment_rules.dart';
+import 'package:graph_maker_app_2/rules/graph_rules.dart';
+import 'package:graph_maker_app_2/rules/johnson_rules.dart';
 import 'package:graph_maker_app_2/screens/graph_screen.dart';
 import 'package:graph_maker_app_2/screens/assignment_screen.dart';
 import 'package:graph_maker_app_2/screens/insertion_sort.dart';
@@ -64,15 +67,17 @@ void _push(BuildContext context, Widget page) {
 
 /// Abre una pantalla que trabaja sobre una COPIA del grafo principal
 /// (igual que hacías en GraphScreen con Johnson y Húngaro).
+/// `rules` son las reglas de edición del modo (AssignmentRules, JohnsonRules...).
 void _pushWithCopy(
   BuildContext context,
+  GraphRules rules,
   Widget Function(GraphProvider main) screen,
 ) {
   final main = context.read<GraphProvider>();
   Navigator.of(context).push(
     MaterialPageRoute(
       builder: (_) => ChangeNotifierProvider<GraphProvider>(
-        create: (_) => GraphProvider(initialGraph: main.snapshot()),
+        create: (_) => GraphProvider(initialGraph: main.snapshot(), graphRules: rules),
         child: screen(main),
       ),
     ),
@@ -90,13 +95,13 @@ final _methods = <_Method>[
     'Assignation Algorithm',
     'Asigna tareas a recursos buscando el menor costo total.',
     Icons.compare_arrows,
-    (ctx) => _pushWithCopy(ctx, (main) => AssignmentScreen(mainProvider: main)),
+    (ctx) => _pushWithCopy(ctx, AssignmentRules(), (main) => AssignmentScreen(mainProvider: main)),
   ),
   _Method(
     'Johnson Algorithm',
     'Calcula caminos mínimos entre todos los pares de vértices.',
     Icons.route,
-    (ctx) => _pushWithCopy(ctx, (main) => JohnsonScreen(mainProvider: main)),
+    (ctx) => _pushWithCopy(ctx, JohnsonRules(), (main) => JohnsonScreen(mainProvider: main)),
   ),
   _Method(
     'Selection Sort',

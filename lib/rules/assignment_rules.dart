@@ -48,13 +48,13 @@ class AssignmentRules extends GraphRules{
         break;
       }
       if(sourcesIds.contains(edge.targetNodeId)){
-        messages.add("Node with incoming and outgoing edges");
+        messages.add("Node ${graph.nodes[edge.targetNodeId]!.name} can't have incoming and outgoing edges");
         break;
       }else{
         targetIds.add(edge.targetNodeId);
       }
       if(targetIds.contains(edge.sourceNodeId)){
-        messages.add("Node with incoming and outgoing edges");
+        messages.add("Node ${graph.nodes[edge.sourceNodeId]!.name} can't have incoming and outgoing edges");
         break;
       }else{
         sourcesIds.add(edge.sourceNodeId);

@@ -12,6 +12,9 @@
       final padded = addDummies(matrix, rows, cols);
       final cost = min ? padded : _negate(padded);
       final assignment = _kuhnMunkres(cost);
+      result.fullAssignment = assignment;
+      result.rows = rows;
+      result.cols = cols;
 
       for (int i = 0; i < rows; i++) {
         final j = assignment[i];
@@ -108,4 +111,7 @@
   class HungarianResult {
     List<int> assignment = [];
     double totalCost = 0;
+    List<int> fullAssignment = [];
+    int rows = 0;
+    int cols = 0;
   }

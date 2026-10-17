@@ -12,6 +12,11 @@ class AppColors {
   static const Color lightNodeLabel = Color.fromARGB(255, 255, 255, 255);
   static const Color darkNodeLabel = Color.fromARGB(255, 0, 0, 0);
   static const Color assignmentEdge = Color.fromARGB(255, 0, 189, 0);
+  //assignment dummies (view-only overlay)
+  static const Color ghostNode = Color.fromARGB(90, 120, 120, 120);
+  static const Color ghostNodeBorder = Color.fromARGB(255, 120, 120, 120);
+  static const Color ghostEdge = Color.fromARGB(110, 120, 120, 120);
+  static const Color noEdgeAssignment = Color.fromARGB(255, 220, 40, 40);
   static const Color maxJohnson = Color.fromARGB(255, 145, 39, 245);
   static const Color minJohnson = Color.fromARGB(255, 255, 200, 0);
   //aiChat

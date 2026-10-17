@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:graph_maker_app_2/models/app_viewport.dart';
 
+import '../models/assignment_overlay.dart';
 import '../providers/graph_provider.dart';
 import 'dialogs/edge_dialog.dart';
 import 'dialogs/edit_node_dialog.dart';
@@ -15,10 +16,14 @@ class GraphWidget extends StatefulWidget{
   final Set<String> highlightedEdgeIds;
   final Color highlightedColor;
   final Map<String, double> holgura;
+  final List<GhostNode> ghostNodes;
+  final List<GhostEdge> ghostEdges;
   const GraphWidget({
     super.key, this.highlightedEdgeIds = const <String>{},
     this.highlightedColor = AppColors.assignmentEdge,
-    this.holgura = const <String, double>{}
+    this.holgura = const <String, double>{},
+    this.ghostNodes = const <GhostNode>[],
+    this.ghostEdges = const <GhostEdge>[],
   });
 
   @override
@@ -165,9 +170,11 @@ class _GraphWidgetState extends State<GraphWidget> {
         String tap = graphProvider.findNodeAt(details.localPosition.dx, details.localPosition.dy);
         if(tap != "") {
           String? message = graphProvider.removeNode(tap);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message!)),
-          );
+          if(message != null){
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message)),
+            );
+          }
         } else {
           String edgeTap = graphProvider.findEdgeAt(details.localPosition.dx, details.localPosition.dy);
           if(edgeTap != ""){
@@ -211,6 +218,8 @@ class _GraphWidgetState extends State<GraphWidget> {
             highlightedEdgeIds: widget.highlightedEdgeIds,
             highlightedColor: widget.highlightedColor,
             holgura: widget.holgura,
+            ghostNodes: widget.ghostNodes,
+            ghostEdges: widget.ghostEdges,
             dragSourceId: sourceNode,
             dragCurrentPosition: currentDragPosition,
             movingNodeId: _isMovingNode ? _movingNodeId : null,

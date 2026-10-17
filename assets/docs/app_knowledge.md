@@ -73,6 +73,8 @@ How to use it:
 Good to know:
 - Only real edges can be selected. Edges with weight 0 or a negative weight are ignored by this algorithm.
 - If no assignment exists, the app shows "No assignment found in this graph".
+- **Dummy nodes:** when there are more sources than targets (or the other way around), the algorithm adds dummy nodes so both sides have the same size. They appear as faded grey circles with a dashed border named D1, D2…, placed under the lowest node of their side. Their edges are dashed and weigh 0; the dummy edge that was picked is drawn in green. A source matched to a dummy means it got no real job (and vice versa). Dummies are only drawn on screen: they are not part of your graph, are not saved, and disappear as soon as you edit the graph (run the algorithm again to see them).
+- If the solver had to pair two nodes that have no edge between them, that pair is drawn as a dashed **red** line labeled "no edge", meaning the graph has no complete assignment.
 - It works best on graphs where some nodes only have outgoing edges (workers) and others only have incoming edges (jobs), but it also works on general graphs.
 
 ## AI Assistant (chat)
