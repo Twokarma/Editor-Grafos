@@ -5,6 +5,7 @@ import 'package:graph_maker_app_2/providers/graph_provider.dart';
 import 'package:graph_maker_app_2/screens/johnson_matrix_screen.dart';
 import 'package:graph_maker_app_2/services/johnson_service.dart';
 import 'package:graph_maker_app_2/theme/app_colors.dart';
+import 'package:graph_maker_app_2/widgets/overlays/johnson_overlay.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
@@ -330,9 +331,11 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
             ],
           ),
           body: GraphWidget(
-              highlightedEdgeIds: _pathEdgeIds,
-              holgura: _lastResult != null? _lastResult!.holgura : <String, double>{},
-              highlightedColor: _objective == Objective.max? AppColors.maxJohnson : AppColors.minJohnson
+              canvasOverlay: JohnsonOverlay(
+                  _pathEdgeIds,
+                  _objective == Objective.max? AppColors.maxJohnson : AppColors.minJohnson,
+                  _lastResult != null? _lastResult!.holgura : <String, double>{}
+              ),
           ),
           floatingActionButton: FloatingActionButton(
             key: _matrixKey, // ★ AYUDA

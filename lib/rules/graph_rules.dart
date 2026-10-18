@@ -2,7 +2,6 @@ import 'package:graph_maker_app_2/models/edge.dart';
 import 'package:graph_maker_app_2/models/graph.dart';
 
 import '../models/node.dart';
-enum Mode{normal, assignment, johnson}
 
 abstract class GraphRules {
 

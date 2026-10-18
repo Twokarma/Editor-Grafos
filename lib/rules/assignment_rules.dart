@@ -43,7 +43,7 @@ class AssignmentRules extends GraphRules{
         messages.add("Non-directed edges aren't allowed in Assignment");
         break;
       }
-      if(edge.sourceNodeId == edge.targetNodeId){
+      if(edge.isLoop()){
         messages.add("Self loops aren't allowed in Assignment");
         break;
       }

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:graph_maker_app_2/widgets/dialogs/edit_edge_dialog.dart';
+import 'package:graph_maker_app_2/widgets/overlays/canvas_overlay.dart';
 import 'package:provider/provider.dart';
 import 'package:graph_maker_app_2/models/app_viewport.dart';
 
@@ -13,17 +15,10 @@ import 'graph_painter.dart';
 import '../theme/app_colors.dart';
 
 class GraphWidget extends StatefulWidget{
-  final Set<String> highlightedEdgeIds;
-  final Color highlightedColor;
-  final Map<String, double> holgura;
-  final List<GhostNode> ghostNodes;
-  final List<GhostEdge> ghostEdges;
+  final CanvasOverlay canvasOverlay;
   const GraphWidget({
-    super.key, this.highlightedEdgeIds = const <String>{},
-    this.highlightedColor = AppColors.assignmentEdge,
-    this.holgura = const <String, double>{},
-    this.ghostNodes = const <GhostNode>[],
-    this.ghostEdges = const <GhostEdge>[],
+    super.key,
+    this.canvasOverlay = const DefaultOverlay(),
   });
 
   @override
@@ -198,9 +193,16 @@ class _GraphWidgetState extends State<GraphWidget> {
         String tap = graphProvider.findNodeAt(details.localPosition.dx, details.localPosition.dy);
 
 
-        if(tap != ""){
+        if(tap.startsWith("n")){
           showEditNodeDialog(context, graphProvider, tap);
         } else {
+          tap = graphProvider.findEdgeAt(details.localPosition.dx, details.localPosition.dy);
+          if(tap.startsWith("e")) {
+            showEditEdgeDialog(context, graphProvider, tap);
+          }
+        }
+
+        if(tap == ""){
           String? message = graphProvider.addNode(details.localPosition.dx, details.localPosition.dy);
           if(message != null){
             ScaffoldMessenger.of(context).showSnackBar(
@@ -215,15 +217,11 @@ class _GraphWidgetState extends State<GraphWidget> {
           painter: GraphPainter(
             nodes: graphProvider.graphGetter().nodes,
             edges: graphProvider.graphGetter().edges,
-            highlightedEdgeIds: widget.highlightedEdgeIds,
-            highlightedColor: widget.highlightedColor,
-            holgura: widget.holgura,
-            ghostNodes: widget.ghostNodes,
-            ghostEdges: widget.ghostEdges,
             dragSourceId: sourceNode,
             dragCurrentPosition: currentDragPosition,
             movingNodeId: _isMovingNode ? _movingNodeId : null,
             movingNodePosition: _isMovingNode ? _movingNodeCurrentPosition : null,
+            canvasOverlay: widget.canvasOverlay,
             viewport: viewport,
           ),
         ),

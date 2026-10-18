@@ -4,6 +4,8 @@ import 'package:graph_maker_app_2/models/assignment_overlay.dart';
 import 'package:graph_maker_app_2/models/matrix_data.dart';
 import 'package:graph_maker_app_2/providers/graph_provider.dart';
 import 'package:graph_maker_app_2/services/assignment_service.dart';
+import 'package:graph_maker_app_2/theme/app_colors.dart';
+import 'package:graph_maker_app_2/widgets/overlays/assignment_canvas_overlay.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
@@ -258,9 +260,12 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
               ],
             ),
           body: GraphWidget(
-            highlightedEdgeIds: overlay?.highlightedEdgeIds ?? const <String>{},
-            ghostNodes: overlay?.nodes ?? const [],
-            ghostEdges: overlay?.edges ?? const [],
+            canvasOverlay: AssignmentCanvasOverlay(
+                overlay?.highlightedEdgeIds ?? const <String>{},
+                AppColors.assignmentEdge,
+                overlay?.nodes ?? const [],
+                overlay?.edges ?? const []
+            ),
           ),
           floatingActionButton: FloatingActionButton(
             key: _matrixKey, // ★ AYUDA

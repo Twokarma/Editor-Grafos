@@ -53,7 +53,7 @@ class JohnsonRules extends GraphRules{
         messages.add("Non-directed edges aren't allowed in Johnson");
         break;
       }
-      if(edge.sourceNodeId == edge.targetNodeId){
+      if(edge.isLoop()){
         messages.add("Self loop aren't allowed in Johnson");
         break;
       }
