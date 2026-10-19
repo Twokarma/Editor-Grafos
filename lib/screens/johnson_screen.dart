@@ -93,22 +93,17 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
   }
 
   void _onGraphChanged() {
-    // ★ evita "setState called during build" si el provider notifica en pleno build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (_lastSignature != _structureSignature()) {
-        setState(() {
-          _lastResult = null;
-          _pathEdgeIds = {};
-          _message = null;
-          _hasChanges = true;
-        });
-      } else {
-        setState(() {
-          _hasChanges = false;
-        });
-      }
-    });
+    // Sin setState ni postFrameCallback: context.watch ya reconstruye la
+    // pantalla, y el camino viejo debe limpiarse antes de ese build
+    // (si no, _buildTextPath busca aristas borradas).
+    if (_lastSignature != _structureSignature()) {
+      _lastResult = null;
+      _pathEdgeIds = {};
+      _message = null;
+      _hasChanges = true;
+    } else {
+      _hasChanges = false;
+    }
   }
 
   @override
