@@ -104,6 +104,7 @@ class JohnsonService {
     List<List<String>> edgesIds = obj == Objective.max? result.bestEdgeIdsMax : result.bestEdgeIdsMIn;
     int i = index[from]!;
     int j = index[to]!;
+    if(distance[i][j] == inf) return{};
     Edge edge = edgesMap[edgesIds[i][j]]!;
     edgePath.add(edge.id);
     while(edge.sourceNodeId != from){

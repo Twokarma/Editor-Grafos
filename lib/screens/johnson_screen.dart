@@ -5,6 +5,7 @@ import 'package:graph_maker_app_2/providers/graph_provider.dart';
 import 'package:graph_maker_app_2/screens/johnson_matrix_screen.dart';
 import 'package:graph_maker_app_2/services/johnson_service.dart';
 import 'package:graph_maker_app_2/theme/app_colors.dart';
+import 'package:graph_maker_app_2/widgets/dialogs/confirm_exit_dialog.dart';
 import 'package:graph_maker_app_2/widgets/overlays/johnson_overlay.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
@@ -41,6 +42,7 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
   String? _to;
   Set<String> _pathEdgeIds = {};
   String? _message;
+  bool _hasChanges = true;
 
   late final GraphProvider _copy;
 
@@ -88,7 +90,18 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
   }
 
   void _onGraphChanged(){
-    if(_lastSignature != _structureSignature()) _runJohnson();
+    if(_lastSignature != _structureSignature()) {
+      setState(() {
+        _lastResult = null;
+        _pathEdgeIds = {};
+        _message = null;
+        _hasChanges = true;
+      });
+    }else{
+      setState(() {
+        _hasChanges = false;
+      });
+    }
   }
 
   @override
@@ -118,7 +131,11 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
       return;
     }
     List<String> messages = _copy.validateGraph();
-    if(messages.isNotEmpty) _fail(messages.first);
+    if(messages.isNotEmpty) {
+      _fail(messages.first);
+      return;
+    }
+
 
     Map<String, int> index = {};
     for(int i = 0; i < nodes.length; i++){
@@ -157,9 +174,9 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
     }
     setState(() {
       _lastResult = result;
-      _objective = Objective.max;
       _from = _service?.nodeFrom;
       _to = _service?.nodeTo;
+      _hasChanges = false;
       _message = null;
     });
 
@@ -167,7 +184,7 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
   }
 
   String _structureSignature(){
-    return _copy.graphGetter().nodes.keys.toList().toString() + _copy.graphGetter().edges.values.map((e) => [
+    return _copy.graphGetter().edges.values.map((e) => [
       e.id,
       e.sourceNodeId,
       e.targetNodeId,
@@ -215,6 +232,8 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
     final graphProviderCopy = context.watch<GraphProvider>();
     final String currentGraph = jsonEncode(_copy.graphGetter().toJson());
     final bool hasChanges = _lastAppliedJson != currentGraph;
+    final List<String> messages = _copy.validateGraph();
+    final bool canSolve = _copy.graphGetter().edges.isNotEmpty && messages.isEmpty;
     List<DropdownMenuEntry<String>> dropdownMenuEntries = [];
 
     void handleMenuSelection(BuildContext context, MenuOption option){
@@ -238,7 +257,8 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
 
     void buildDropdownMenuEntries(){
     List<DropdownMenuEntry<String>> entries = [];
-      for(Node node in _copy.graphGetter().nodes.values){
+    if(_service == null) return;
+      for(Node node in _service!.nodes){
         entries.add(
             DropdownMenuEntry<String>(
               value: node.id,
@@ -254,7 +274,7 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
         canPop: !hasChanges,
         onPopInvokedWithResult: ((didPop, result) {
           if(didPop) return;
-          showConfirmExitCopyDialog(context, widget.mainProvider, _copy);
+          showConfirmExitDialog(context, _copy);
         }),
         child: Scaffold(
           appBar: AppBar(
@@ -422,48 +442,49 @@ class _JohnsonScreenState extends State<JohnsonScreen>{
                     Row(
                       children: [
                         Expanded(
-                          child:
-                            SegmentedButton<Objective>(
-                              key: _objectiveKey, // ★ AYUDA
-                              expandedInsets: EdgeInsets.zero,
-                              multiSelectionEnabled: false,
-                              emptySelectionAllowed: false,
-                              segments: const[
-                                ButtonSegment<Objective>(
-                                  value: Objective.max,
-                                  label: Text('Maximize'),
-                                  icon: Icon(Icons.trending_up),
-                                ),
-                                ButtonSegment<Objective>(
-                                  value: Objective.min,
-                                  label: Text('Minimize'),
-                                  icon: Icon(Icons.trending_down),
-                                ),
-                              ],
-                              selected: <Objective>{_objective},
-                              onSelectionChanged: _lastResult != null? (Set<Objective> newObjective){
-                                setState(() {
-                                  _objective = newObjective.first;
-                                });
-                                _pathUpdate();
-                              } : null,
-                            ),
+                          child: FilledButton.icon(
+                            //key: _objectiveKey, // ★ AYUDA
+                            onPressed: canSolve? () {
+                              setState(() {
+                                _objective = Objective.min;
+                              });
+                              if(_hasChanges) _runJohnson();
+                              _pathUpdate();
+                            } : null,
+                            icon: const Icon(Icons.trending_down),
+                            label: Text('Minimize'),
+                          ),
+                        ),
+                        SizedBox(width: 8.0,),
+                        Expanded(
+                          child: FilledButton.icon(
+                            //key: _objectiveKey, // ★ AYUDA
+                            onPressed: canSolve? () {
+                              setState(() {
+                                _objective = Objective.max;
+                              });
+                              if(_hasChanges) _runJohnson();
+                              _pathUpdate();
+                            } : null,
+                            icon: const Icon(Icons.trending_up),
+                            label: Text('Maximize'),
+                          ),
                         ),
                       ],
                     ),
-                    if(_message != null)
-                    Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                            _message!,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                              color: _lastResult == null? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                        ),
-                    ),
+                    // if(_message != null)
+                    // Padding(
+                    //     padding: const EdgeInsets.only(top: 6),
+                    //     child: Text(
+                    //         _message!,
+                    //         textAlign: TextAlign.center,
+                    //         maxLines: 2,
+                    //         overflow: TextOverflow.ellipsis,
+                    //         style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    //           color: _lastResult == null? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
+                    //         ),
+                    //     ),
+                    // ),
                   ],
                 ),
               )

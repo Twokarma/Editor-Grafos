@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 
 import '../widgets/dialogs/confirm_exit_copy_dialog.dart';
+import '../widgets/dialogs/confirm_exit_dialog.dart';
 import '../widgets/dialogs/open_graph_dialog.dart';
 import '../widgets/dialogs/save_graph_dialog.dart';
 import '../widgets/graph_canvas.dart';
@@ -183,7 +184,7 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
         canPop: !hasChanges,
         onPopInvokedWithResult: ((didPop, result) {
           if(didPop) return;
-          showConfirmExitCopyDialog(context, widget.mainProvider, _copy);
+          showConfirmExitDialog(context, _copy);
         }),
         child: Scaffold(
             appBar: AppBar(
