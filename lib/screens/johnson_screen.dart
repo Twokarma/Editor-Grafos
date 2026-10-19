@@ -240,12 +240,8 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
     // ★ aviso corregido: interpolación innecesaria
     path += nodes[edges[copy[0]]!.targetNodeId]!.name;
 
-    // ★ CORRECCIÓN: el costo es la suma de pesos, no un id de arista
-    num total = 0;
-    for (final id in copy) {
-      total += edges[id]!.weight;
-    }
-    return "$path = $total";
+    // JohnsonService.path() agrega la distancia total como último elemento
+    return "$path = ${copy[copy.length - 1]}";
   }
 
   @override
