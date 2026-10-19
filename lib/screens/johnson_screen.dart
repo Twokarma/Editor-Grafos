@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 
 import '../models/node.dart';
-import '../widgets/dialogs/confirm_exit_copy_dialog.dart';
 import '../widgets/dialogs/open_graph_dialog.dart';
 import '../widgets/dialogs/save_graph_dialog.dart';
 import '../widgets/graph_canvas.dart';
