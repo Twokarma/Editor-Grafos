@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../providers/graph_provider.dart';
 
-Future<void> showSaveDialog(BuildContext context, GraphProvider provider) async {
+Future<bool> showSaveDialog(BuildContext context, GraphProvider provider) async {
   final controller = TextEditingController();
   final name = await showDialog<String>(
     context: context,
@@ -29,11 +29,11 @@ Future<void> showSaveDialog(BuildContext context, GraphProvider provider) async 
     },
   );
 
-  if (name == null || name.isEmpty) return;
-  if (!context.mounted) return;
+  if (name == null || name.isEmpty) return false;
+  if (!context.mounted) return false;
 
   final exists = await provider.savedGraphExists(name);
-  if (!context.mounted) return;
+  if (!context.mounted) return false;
 
   if (exists) {
     final confirmed = await showDialog<bool>(
@@ -55,13 +55,14 @@ Future<void> showSaveDialog(BuildContext context, GraphProvider provider) async 
         );
       },
     );
-    if (confirmed != true) return;
-    if (!context.mounted) return;
+    if (confirmed != true) return false;
+    if (!context.mounted) return false;
   }
 
   await provider.saveGraph(name);
-  if (!context.mounted) return;
+  if (!context.mounted) return false;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text('Saved as "$name"')),
   );
+  return true;
 }
