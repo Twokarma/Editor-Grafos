@@ -1,6 +1,12 @@
 import 'dart:async';
+import 'dart:math';
+import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/models/bolo.dart';
+import 'package:graph_maker_app_2/models/velocidad.dart';
+import 'package:graph_maker_app_2/services/sort_storage_service.dart';
+import 'package:graph_maker_app_2/widgets/velocidad_dropdown.dart';
+import 'package:graph_maker_app_2/widgets/dialogs/sort_guardado_dialogs.dart';
 
 class SelectionSort extends StatefulWidget {
   const SelectionSort({super.key});
@@ -11,22 +17,38 @@ class SelectionSort extends StatefulWidget {
 
 class _SelectionSortState extends State<SelectionSort> {
   static const int maxBolos = 20;
+  static const int valorMax = 99; // 2 dígitos caben bien dentro del bolo
   static const double escalaInicial = 0.3;
   static const double incremento = 0.08;
+  static const String _algoritmo = SortStorageService.grupoCompartido;
 
-  // Pausas de la animación (ajústalas a tu gusto)
-  static const Duration pausaComparar = Duration(milliseconds: 120);
-  static const Duration pausaIntercambio = Duration(milliseconds: 350);
+  final Random _rand = Random();
+  final SortStorageService _storage = SortStorageService();
 
   double _cantidad = 5;
-  late List<double> _escalas;
+  late List<int> _valores;
+
+  // velocidad de la animación
+  Velocidad _velocidad = Velocidad.normal;
+
+  Duration get _pausaComparar =>
+      Duration(milliseconds: (120 * _velocidad.factor).round());
+  Duration get _pausaIntercambio =>
+      Duration(milliseconds: (350 * _velocidad.factor).round());
+
+  // Duración de la subida/bajada, ligada a la velocidad elegida
+  Duration get _duracionAnim => Duration(
+      milliseconds: (100 * _velocidad.factor).round().clamp(30, 250).toInt());
+
+  // Los bolos que se están comparando se elevan
+  bool _elevado(int idx) => _ordenando && (idx == _j || idx == _min);
 
   // Estado del algoritmo (para resaltar los bolos)
   bool _ordenando = false;
-  int _i = -1;      // posición que se está fijando
-  int _j = -1;      // bolo que se está comparando
-  int _min = -1;    // menor encontrado hasta ahora
-  int _fijos = 0;   // cuántos bolos del inicio ya quedaron en su lugar
+  int _i = -1; // posición que se está fijando
+  int _j = -1; // bolo que se está comparando
+  int _min = -1; // menor encontrado hasta ahora
+  int _fijos = 0; // cuántos bolos del inicio ya quedaron en su lugar
 
   // Temporizador
   final Stopwatch _cronometro = Stopwatch();
@@ -35,7 +57,7 @@ class _SelectionSortState extends State<SelectionSort> {
   @override
   void initState() {
     super.initState();
-    _generarEscalas();
+    _generarSecuencial();
   }
 
   @override
@@ -44,9 +66,11 @@ class _SelectionSortState extends State<SelectionSort> {
     super.dispose();
   }
 
-  void _generarEscalas() {
+  // ---------- generación de valores ----------
+
+  void _generarSecuencial() {
     final n = _cantidad.round();
-    _escalas = List.generate(n, (i) => escalaInicial + i * incremento);
+    _valores = List.generate(n, (i) => i + 1);
     _reiniciarEstado();
   }
 
@@ -59,16 +83,113 @@ class _SelectionSortState extends State<SelectionSort> {
   void _cambiarCantidad(double v) {
     setState(() {
       _cantidad = v;
-      _generarEscalas();
+      _generarSecuencial();
     });
   }
 
   void _mezclar() {
     setState(() {
-      _escalas.shuffle();
+      _valores.shuffle();
       _reiniciarEstado();
     });
   }
+
+  // valores aleatorios (pueden repetirse)
+  void _aleatorios() {
+    setState(() {
+      final n = _valores.length;
+      _valores = List.generate(n, (_) => _rand.nextInt(valorMax) + 1);
+      _reiniciarEstado();
+    });
+  }
+
+  // ingresar valores a mano
+  Future<void> _ingresar() async {
+    final ctrl = TextEditingController(text: _valores.join(', '));
+    String? error;
+
+    final res = await showDialog<List<int>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Ingresar valores'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Ej: 5, 3, 8, 1',
+              helperText:
+                  'Separados por coma o espacio (1 a $valorMax, máx. $maxBolos)',
+              errorText: error,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final partes = ctrl.text
+                    .split(RegExp(r'[,\s]+'))
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final nums = partes.map(int.tryParse).toList();
+
+                if (nums.isEmpty) {
+                  setDlg(() => error = 'Ingresa al menos un valor');
+                } else if (nums.contains(null)) {
+                  setDlg(() => error = 'Solo se permiten números');
+                } else if (nums.any((n) => n! < 1 || n > valorMax)) {
+                  setDlg(
+                      () => error = 'Cada valor debe estar entre 1 y $valorMax');
+                } else if (nums.length > maxBolos) {
+                  setDlg(() => error = 'Máximo $maxBolos valores');
+                } else {
+                  Navigator.pop(ctx, nums.cast<int>());
+                }
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+
+    if (res != null) {
+      setState(() {
+        _valores = res;
+        _cantidad = res.length.toDouble(); // mantiene el slider sincronizado
+        _reiniciarEstado();
+      });
+    }
+  }
+
+  // ---------- guardar / cargar ----------
+
+  Future<void> _guardar() => guardarValoresDialog(
+        context: context,
+        storage: _storage,
+        algoritmo: _algoritmo,
+        valores: _valores,
+      );
+
+  Future<void> _cargar() async {
+    final valores = await cargarValoresDialog(
+      context: context,
+      storage: _storage,
+      algoritmo: _algoritmo,
+    );
+    if (valores == null || !mounted) return;
+    setState(() {
+      _valores = valores;
+      _cantidad = valores.length.toDouble();
+      _reiniciarEstado();
+    });
+  }
+
+  // ---------- algoritmo ----------
 
   Future<void> _resolver() async {
     setState(() {
@@ -81,36 +202,36 @@ class _SelectionSortState extends State<SelectionSort> {
       ..start();
     _reloj = Timer.periodic(
       const Duration(milliseconds: 100),
-          (_) => setState(() {}),
+      (_) => setState(() {}),
     );
 
-    final n = _escalas.length;
+    final n = _valores.length;
 
     for (int i = 0; i < n - 1; i++) {
-      int min = i;
+      int indiceMin = i;
       setState(() {
         _i = i;
-        _min = min;
+        _min = indiceMin;
       });
 
       for (int j = i + 1; j < n; j++) {
         setState(() => _j = j);
-        await Future.delayed(pausaComparar);
+        await Future.delayed(_pausaComparar);
         if (!mounted) return;
 
-        if (_escalas[j] < _escalas[min]) {
-          min = j;
-          setState(() => _min = min);
+        if (_valores[j] < _valores[indiceMin]) {
+          indiceMin = j;
+          setState(() => _min = indiceMin);
         }
       }
 
-      if (min != i) {
+      if (indiceMin != i) {
         setState(() {
-          final temp = _escalas[i];
-          _escalas[i] = _escalas[min];
-          _escalas[min] = temp;
+          final temp = _valores[i];
+          _valores[i] = _valores[indiceMin];
+          _valores[indiceMin] = temp;
         });
-        await Future.delayed(pausaIntercambio);
+        await Future.delayed(_pausaIntercambio);
         if (!mounted) return;
       }
 
@@ -126,6 +247,8 @@ class _SelectionSortState extends State<SelectionSort> {
     });
   }
 
+  // ---------- visual ----------
+
   Color _colorDe(int idx) {
     if (_ordenando) {
       if (idx == _min) return Colors.orangeAccent;
@@ -136,24 +259,30 @@ class _SelectionSortState extends State<SelectionSort> {
     return Colors.white;
   }
 
-  // Convierte la escala del bolo en su número (1 = el más pequeño)
-  int _numeroDe(double escala) =>
-      ((escala - escalaInicial) / incremento).round() + 1;
-
+  // Tamaño proporcional al valor. Con 1..n queda igual que antes
+  // (escalaInicial + i * incremento); con otros valores se reparte
+  // el mismo rango de tamaños entre el mínimo y el máximo.
+  double _escalaDe(int valor) {
+    final minV = _valores.reduce(min);
+    final maxV = _valores.reduce(max);
+    if (maxV == minV) return escalaInicial + 0.4;
+    final rango = (_valores.length - 1) * incremento;
+    return escalaInicial + (valor - minV) / (maxV - minV) * rango;
+  }
 
   String get _tiempo {
     final ms = _cronometro.elapsedMilliseconds;
-    final min = (ms ~/ 60000).toString().padLeft(2, '0');
+    final minutos = (ms ~/ 60000).toString().padLeft(2, '0');
     final seg = ((ms ~/ 1000) % 60).toString().padLeft(2, '0');
     final dec = ((ms % 1000) ~/ 100).toString();
-    return '$min:$seg.$dec';
+    return '$minutos:$seg.$dec';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Selection Sort (${_escalas.length})"),
+        title: Text("Selection Sort (${_valores.length})"),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Slider(
@@ -192,13 +321,18 @@ class _SelectionSortState extends State<SelectionSort> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      for (int idx = 0; idx < _escalas.length; idx++)
+                      for (int idx = 0; idx < _valores.length; idx++)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Bolo(
-                            escala: _escalas[idx],
-                            color: _colorDe(idx),
-                            numero: _numeroDe(_escalas[idx]),
+                          child: AnimatedSlide(
+                            offset: Offset(0, _elevado(idx) ? -0.12 : 0),
+                            duration: _duracionAnim,
+                            curve: Curves.easeOut,
+                            child: Bolo(
+                              escala: _escalaDe(_valores[idx]),
+                              color: _colorDe(idx),
+                              numero: _valores[idx],
+                            ),
                           ),
                         ),
                     ],
@@ -207,16 +341,46 @@ class _SelectionSortState extends State<SelectionSort> {
               ),
             ),
 
+            // Velocidad (activa también mientras se ordena)
+            Center(
+              child: VelocidadDropdown(
+                valor: _velocidad,
+                onChanged: (v) => setState(() => _velocidad = v),
+              ),
+            ),
+
             // Botones
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   ElevatedButton.icon(
                     onPressed: _ordenando ? null : _mezclar,
                     icon: const Icon(Icons.shuffle),
                     label: const Text("Mezclar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _aleatorios,
+                    icon: const Icon(Icons.casino),
+                    label: const Text("Aleatorio"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _ingresar,
+                    icon: const Icon(Icons.edit),
+                    label: const Text("Ingresar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _guardar,
+                    icon: const Icon(Icons.save),
+                    label: const Text("Guardar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _cargar,
+                    icon: const Icon(Icons.folder_open),
+                    label: const Text("Cargar"),
                   ),
                   ElevatedButton.icon(
                     onPressed: _ordenando ? null : _resolver,

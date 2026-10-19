@@ -1,7 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:graph_maker_app_2/models/bolo.dart';
+import 'package:graph_maker_app_2/models/velocidad.dart';
+import 'package:graph_maker_app_2/services/sort_storage_service.dart';
+import 'package:graph_maker_app_2/widgets/velocidad_dropdown.dart';
+import 'package:graph_maker_app_2/widgets/dialogs/sort_guardado_dialogs.dart';
 
 class MergeSort extends StatefulWidget {
   const MergeSort({super.key});
@@ -12,15 +17,31 @@ class MergeSort extends StatefulWidget {
 
 class _MergeSortState extends State<MergeSort> {
   static const int maxBolos = 20;
+  static const int valorMax = 99; // 2 dígitos caben bien dentro del bolo
   static const double escalaInicial = 0.3;
   static const double incremento = 0.08;
+  static const String _algoritmo = SortStorageService.grupoCompartido;
 
-  // pausas en la animacion
-  static const Duration pausaComparar = Duration(milliseconds: 120);
-  static const Duration pausaEscribir = Duration(milliseconds: 300);
+  final Random _rand = Random();
+  final SortStorageService _storage = SortStorageService();
 
   double _cantidad = 5;
-  late List<double> _escalas;
+  late List<int> _valores;
+
+  // velocidad de la animación
+  Velocidad _velocidad = Velocidad.normal;
+
+  Duration get _pausaComparar =>
+      Duration(milliseconds: (120 * _velocidad.factor).round());
+  Duration get _pausaEscribir =>
+      Duration(milliseconds: (300 * _velocidad.factor).round());
+
+  // Duración de la subida/bajada, ligada a la velocidad elegida
+  Duration get _duracionAnim => Duration(
+      milliseconds: (100 * _velocidad.factor).round().clamp(30, 250).toInt());
+
+  // Los bolos que se están comparando se elevan
+  bool _elevado(int idx) => _ordenando && (idx == _actual);
 
   // estado del algoritmo
   bool _ordenando = false;
@@ -36,7 +57,7 @@ class _MergeSortState extends State<MergeSort> {
   @override
   void initState() {
     super.initState();
-    _generarEscalas();
+    _generarSecuencial();
   }
 
   @override
@@ -45,9 +66,11 @@ class _MergeSortState extends State<MergeSort> {
     super.dispose();
   }
 
-  void _generarEscalas() {
+  // ---------- generación de valores ----------
+
+  void _generarSecuencial() {
     final n = _cantidad.round();
-    _escalas = List.generate(n, (i) => escalaInicial + i * incremento);
+    _valores = List.generate(n, (i) => i + 1);
     _reiniciarEstado();
   }
 
@@ -60,16 +83,113 @@ class _MergeSortState extends State<MergeSort> {
   void _cambiarCantidad(double v) {
     setState(() {
       _cantidad = v;
-      _generarEscalas();
+      _generarSecuencial();
     });
   }
 
   void _mezclar() {
     setState(() {
-      _escalas.shuffle();
+      _valores.shuffle();
       _reiniciarEstado();
     });
   }
+
+  // valores aleatorios (pueden repetirse)
+  void _aleatorios() {
+    setState(() {
+      final n = _valores.length;
+      _valores = List.generate(n, (_) => _rand.nextInt(valorMax) + 1);
+      _reiniciarEstado();
+    });
+  }
+
+  // ingresar valores a mano
+  Future<void> _ingresar() async {
+    final ctrl = TextEditingController(text: _valores.join(', '));
+    String? error;
+
+    final res = await showDialog<List<int>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Ingresar valores'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Ej: 5, 3, 8, 1',
+              helperText:
+                  'Separados por coma o espacio (1 a $valorMax, máx. $maxBolos)',
+              errorText: error,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final partes = ctrl.text
+                    .split(RegExp(r'[,\s]+'))
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final nums = partes.map(int.tryParse).toList();
+
+                if (nums.isEmpty) {
+                  setDlg(() => error = 'Ingresa al menos un valor');
+                } else if (nums.contains(null)) {
+                  setDlg(() => error = 'Solo se permiten números');
+                } else if (nums.any((n) => n! < 1 || n > valorMax)) {
+                  setDlg(
+                      () => error = 'Cada valor debe estar entre 1 y $valorMax');
+                } else if (nums.length > maxBolos) {
+                  setDlg(() => error = 'Máximo $maxBolos valores');
+                } else {
+                  Navigator.pop(ctx, nums.cast<int>());
+                }
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+
+    if (res != null) {
+      setState(() {
+        _valores = res;
+        _cantidad = res.length.toDouble(); // mantiene el slider sincronizado
+        _reiniciarEstado();
+      });
+    }
+  }
+
+  // ---------- guardar / cargar ----------
+
+  Future<void> _guardar() => guardarValoresDialog(
+        context: context,
+        storage: _storage,
+        algoritmo: _algoritmo,
+        valores: _valores,
+      );
+
+  Future<void> _cargar() async {
+    final valores = await cargarValoresDialog(
+      context: context,
+      storage: _storage,
+      algoritmo: _algoritmo,
+    );
+    if (valores == null || !mounted) return;
+    setState(() {
+      _valores = valores;
+      _cantidad = valores.length.toDouble();
+      _reiniciarEstado();
+    });
+  }
+
+  // ---------- algoritmo ----------
 
   Future<void> _resolver() async {
     setState(() {
@@ -85,7 +205,7 @@ class _MergeSortState extends State<MergeSort> {
       (_) => setState(() {}),
     );
 
-    await _mergeSort(0, _escalas.length - 1);
+    await _mergeSort(0, _valores.length - 1);
     if (!mounted) return;
 
     _cronometro.stop();
@@ -93,7 +213,7 @@ class _MergeSortState extends State<MergeSort> {
     setState(() {
       _ordenando = false;
       _actual = _desde = _hasta = -1;
-      _fijos = _escalas.length; // todos ordenados al terminar
+      _fijos = _valores.length; // todos ordenados al terminar
     });
   }
 
@@ -112,8 +232,8 @@ class _MergeSortState extends State<MergeSort> {
     if (!mounted) return;
 
     // Copias de cada mitad
-    final izquierda = _escalas.sublist(izq, medio + 1);
-    final derecha = _escalas.sublist(medio + 1, der + 1);
+    final izquierda = _valores.sublist(izq, medio + 1);
+    final derecha = _valores.sublist(medio + 1, der + 1);
 
     setState(() {
       _desde = izq;
@@ -127,20 +247,20 @@ class _MergeSortState extends State<MergeSort> {
 
     while (i < izquierda.length && j < derecha.length) {
       setState(() => _actual = k);
-      await Future.delayed(pausaComparar);
+      await Future.delayed(_pausaComparar);
       if (!mounted) return;
 
       setState(() {
         if (izquierda[i] <= derecha[j]) {
-          _escalas[k] = izquierda[i];
+          _valores[k] = izquierda[i];
           i++;
         } else {
-          _escalas[k] = derecha[j];
+          _valores[k] = derecha[j];
           j++;
         }
       });
       k++;
-      await Future.delayed(pausaEscribir);
+      await Future.delayed(_pausaEscribir);
       if (!mounted) return;
     }
 
@@ -148,11 +268,11 @@ class _MergeSortState extends State<MergeSort> {
     while (i < izquierda.length) {
       setState(() {
         _actual = k;
-        _escalas[k] = izquierda[i];
+        _valores[k] = izquierda[i];
       });
       i++;
       k++;
-      await Future.delayed(pausaEscribir);
+      await Future.delayed(_pausaEscribir);
       if (!mounted) return;
     }
 
@@ -160,11 +280,11 @@ class _MergeSortState extends State<MergeSort> {
     while (j < derecha.length) {
       setState(() {
         _actual = k;
-        _escalas[k] = derecha[j];
+        _valores[k] = derecha[j];
       });
       j++;
       k++;
-      await Future.delayed(pausaEscribir);
+      await Future.delayed(_pausaEscribir);
       if (!mounted) return;
     }
 
@@ -173,6 +293,8 @@ class _MergeSortState extends State<MergeSort> {
       _desde = _hasta = -1;
     });
   }
+
+  // ---------- visual ----------
 
   Color _colorDe(int idx) {
     if (_ordenando) {
@@ -183,23 +305,30 @@ class _MergeSortState extends State<MergeSort> {
     return Colors.white;
   }
 
-  // Convierte la escala del bolo en su número (1 = el más pequeño)
-  int _numeroDe(double escala) =>
-      ((escala - escalaInicial) / incremento).round() + 1;
+  // Tamaño proporcional al valor. Con 1..n queda igual que antes
+  // (escalaInicial + i * incremento); con otros valores se reparte
+  // el mismo rango de tamaños entre el mínimo y el máximo.
+  double _escalaDe(int valor) {
+    final minV = _valores.reduce(min);
+    final maxV = _valores.reduce(max);
+    if (maxV == minV) return escalaInicial + 0.4;
+    final rango = (_valores.length - 1) * incremento;
+    return escalaInicial + (valor - minV) / (maxV - minV) * rango;
+  }
 
   String get _tiempo {
     final ms = _cronometro.elapsedMilliseconds;
-    final min = (ms ~/ 60000).toString().padLeft(2, '0');
+    final minutos = (ms ~/ 60000).toString().padLeft(2, '0');
     final seg = ((ms ~/ 1000) % 60).toString().padLeft(2, '0');
     final dec = ((ms % 1000) ~/ 100).toString();
-    return '$min:$seg.$dec';
+    return '$minutos:$seg.$dec';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Merge Sort (${_escalas.length})"),
+        title: Text("Merge Sort (${_valores.length})"),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),
           child: Slider(
@@ -237,13 +366,18 @@ class _MergeSortState extends State<MergeSort> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      for (int idx = 0; idx < _escalas.length; idx++)
+                      for (int idx = 0; idx < _valores.length; idx++)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Bolo(
-                            escala: _escalas[idx],
-                            color: _colorDe(idx),
-                            numero: _numeroDe(_escalas[idx]),
+                          child: AnimatedSlide(
+                            offset: Offset(0, _elevado(idx) ? -0.12 : 0),
+                            duration: _duracionAnim,
+                            curve: Curves.easeOut,
+                            child: Bolo(
+                              escala: _escalaDe(_valores[idx]),
+                              color: _colorDe(idx),
+                              numero: _valores[idx],
+                            ),
                           ),
                         ),
                     ],
@@ -252,16 +386,46 @@ class _MergeSortState extends State<MergeSort> {
               ),
             ),
 
+            // Velocidad (activa también mientras se ordena)
+            Center(
+              child: VelocidadDropdown(
+                valor: _velocidad,
+                onChanged: (v) => setState(() => _velocidad = v),
+              ),
+            ),
+
             // Botones
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   ElevatedButton.icon(
                     onPressed: _ordenando ? null : _mezclar,
                     icon: const Icon(Icons.shuffle),
                     label: const Text("Mezclar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _aleatorios,
+                    icon: const Icon(Icons.casino),
+                    label: const Text("Aleatorio"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _ingresar,
+                    icon: const Icon(Icons.edit),
+                    label: const Text("Ingresar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _guardar,
+                    icon: const Icon(Icons.save),
+                    label: const Text("Guardar"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _ordenando ? null : _cargar,
+                    icon: const Icon(Icons.folder_open),
+                    label: const Text("Cargar"),
                   ),
                   ElevatedButton.icon(
                     onPressed: _ordenando ? null : _resolver,
