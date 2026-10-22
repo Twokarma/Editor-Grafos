@@ -375,7 +375,8 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
               canvasOverlay: JohnsonOverlay(
                   _pathEdgeIds,
                   _objective == Objective.max? AppColors.maxJohnson : AppColors.minJohnson,
-                  _lastResult != null? _lastResult!.holgura : <String, double>{}
+                  _lastResult ?? JohnsonResult1(),
+                  _lastResult != null? _service!.nodes : <Node>[]
               ),
           ),
           floatingActionButton: FloatingActionButton(

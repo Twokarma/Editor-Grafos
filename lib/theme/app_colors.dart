@@ -31,4 +31,16 @@ class AppColors {
   static const Color matrixBorders = Color.fromARGB(127, 0, 66, 117);
   //gridCanvas
   static const Color gridColor = Color.fromARGB(255, 179, 179, 179);
+  //johnson
+  static const Color johnsonNodeLines = Color.fromARGB(255, 0, 41, 71);
+  //new palette
+  static const Color darkBlue = Color.fromARGB(255, 2, 48, 71);
+  static const Color blue = Color.fromARGB(255, 33, 158, 188);
+  static const Color cian = Color.fromARGB(255, 4, 184, 200);
+  static const Color lightBlue = Color.fromARGB(255, 142, 202, 230);
+  static const Color marfil = Color.fromARGB(255, 230, 231, 233);
+  static const Color cream = Color.fromARGB(255, 242, 231, 201);
+  static const Color mustard = Color.fromARGB(255, 251, 183, 3);
+  static const Color orange = Color.fromARGB(255, 251, 133, 0);
+  static const Color white = Color.fromARGB(255, 255, 255, 255);
 }
