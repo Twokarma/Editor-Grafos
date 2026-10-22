@@ -11,6 +11,8 @@ import 'package:graph_maker_app_2/screens/insertion_sort.dart';
 import 'package:graph_maker_app_2/screens/johnson_screen.dart';
 import 'package:graph_maker_app_2/screens/merge_sort.dart';
 import 'package:graph_maker_app_2/screens/selection_sort.dart';
+import 'package:graph_maker_app_2/rules/transport_rules.dart';
+import 'package:graph_maker_app_2/screens/transportation_screen.dart';
 import 'package:graph_maker_app_2/screens/shell_sort.dart';
 
 /* ==========================================================
@@ -103,6 +105,12 @@ final _methods = <_Method>[
     Icons.route,
     (ctx) => _pushWithCopy(ctx, JohnsonRules(), (main) => JohnsonScreen(mainProvider: main)),
   ),
+   _Method(
+     'Transportation Algorithm',
+     'Reparte unidades desde orígenes hasta destinos al menor costo: esquina noroeste y optimización MODI.',
+     Icons.local_shipping_outlined,
+     (ctx) => _pushWithCopy(ctx, TransportRules(), (main) => TransportationScreen(mainProvider: main)),
+   ),
   _Method(
     'Selection Sort',
     'Ordena una lista seleccionando en cada paso el menor elemento restante.',
