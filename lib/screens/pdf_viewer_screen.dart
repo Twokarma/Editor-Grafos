@@ -21,11 +21,16 @@ class PdfViewerScreen extends StatelessWidget {
 }
 
 /// Abre el manual único de la app (guía rápida).
-void openManual(BuildContext context) {
+/// Abre un PDF de ayuda. Sin parámetros abre la guía rápida general.
+void openManual(
+  BuildContext context, {
+  String title = 'Manual',
+  String assetPath = 'assets/docs/graph_maker_guia_rapida.pdf',
+}) {
   Navigator.of(context).push(MaterialPageRoute(
-    builder: (_) => const PdfViewerScreen(
-      title: 'Manual',
-      assetPath: 'assets/docs/graph_maker_guia_rapida.pdf',
+    builder: (_) => PdfViewerScreen(
+      title: title,
+      assetPath: assetPath,
     ),
   ));
 }

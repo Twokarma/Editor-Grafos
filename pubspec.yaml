@@ -32,6 +32,7 @@ flutter:
     - assets/docs/app_knowledge.md
     - assets/images/graph_maket.png
     - assets/docs/
+    - assets/images/
 
 flutter_launcher_icons:
   android: true

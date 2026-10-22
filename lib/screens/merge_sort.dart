@@ -8,6 +8,10 @@ import 'package:graph_maker_app_2/services/sort_storage_service.dart';
 import 'package:graph_maker_app_2/widgets/velocidad_dropdown.dart';
 import 'package:graph_maker_app_2/widgets/dialogs/sort_guardado_dialogs.dart';
 
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:graph_maker_app_2/widgets/graph_tour.dart';
+import 'package:graph_maker_app_2/screens/pdf_viewer_screen.dart';//para abrir la explicaicon
+
 class MergeSort extends StatefulWidget {
   const MergeSort({super.key});
 
@@ -27,9 +31,49 @@ class _MergeSortState extends State<MergeSort> {
 
   double _cantidad = 5;
   late List<int> _valores;
+// AYUDA: keys de lo que explica el tour
+final _sliderKey = GlobalKey();
+final _velocidadKey = GlobalKey();
+final _mezclarKey = GlobalKey();
+final _aleatorioKey = GlobalKey();
+final _ingresarKey = GlobalKey();
+final _guardarKey = GlobalKey();
+final _cargarKey = GlobalKey();
+final _resolverKey = GlobalKey();
+final _manualKey = GlobalKey();
 
+void _startTour() {
+  GraphTour.show(context, [
+    TourStep(_sliderKey, 'Cantidad de bolos',
+        'Elige cuántos bolos quieres ordenar (de 1 a $maxBolos).',
+        align: ContentAlign.bottom,shape: ShapeLightFocus.RRect),
+    TourStep(_velocidadKey, 'Velocidad',
+        'Cambia la velocidad de la animación, incluso mientras ordena.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_mezclarKey, 'Mezclar',
+        'Desordena los valores actuales.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_aleatorioKey, 'Aleatorio',
+        'Genera valores aleatorios, que pueden repetirse.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_ingresarKey, 'Ingresar',
+        'Escribe tus propios valores a mano.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_guardarKey, 'Guardar',
+        'Guarda la secuencia actual para usarla después.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_cargarKey, 'Cargar',
+        'Abre una secuencia guardada.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+    TourStep(_resolverKey, 'Resolver',
+        'Ejecuta Merge Sort paso a paso con animación.',
+        align: ContentAlign.top, shape: ShapeLightFocus.RRect),
+   TourStep(_manualKey, 'Manual', 'Abre el manual en PDF.'),
+  ]);
+}
   // velocidad de la animación
   Velocidad _velocidad = Velocidad.normal;
+
 
   Duration get _pausaComparar =>
       Duration(milliseconds: (120 * _velocidad.factor).round());
@@ -324,14 +368,32 @@ class _MergeSortState extends State<MergeSort> {
     return '$minutos:$seg.$dec';
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Merge Sort (${_valores.length})"),
+        actions: [
+          IconButton(
+            onPressed: _startTour,
+            tooltip: "Help",
+            icon: const Icon(Icons.help_outline),
+          ),
+          IconButton(
+            key: _manualKey,
+            onPressed: () => openManual(
+              context,
+              title: 'Merge Sort',
+              assetPath: 'assets/docs/Merge_Sort.pdf',
+            ),
+            tooltip: "Manual",
+            icon: const Icon(Icons.menu_book_outlined),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),
           child: Slider(
+            key: _sliderKey,
             min: 1,
             max: maxBolos.toDouble(),
             divisions: maxBolos - 1,
@@ -388,9 +450,12 @@ class _MergeSortState extends State<MergeSort> {
 
             // Velocidad (activa también mientras se ordena)
             Center(
-              child: VelocidadDropdown(
-                valor: _velocidad,
-                onChanged: (v) => setState(() => _velocidad = v),
+              child: Container(
+                key: _velocidadKey, // AYUDA
+                child: VelocidadDropdown(
+                  valor: _velocidad,
+                  onChanged: (v) => setState(() => _velocidad = v),
+                ),
               ),
             ),
 
@@ -403,31 +468,37 @@ class _MergeSortState extends State<MergeSort> {
                 runSpacing: 8,
                 children: [
                   ElevatedButton.icon(
+                    key: _mezclarKey,
                     onPressed: _ordenando ? null : _mezclar,
                     icon: const Icon(Icons.shuffle),
                     label: const Text("Mezclar"),
                   ),
                   ElevatedButton.icon(
+                    key: _aleatorioKey,
                     onPressed: _ordenando ? null : _aleatorios,
                     icon: const Icon(Icons.casino),
                     label: const Text("Aleatorio"),
                   ),
                   ElevatedButton.icon(
+                    key: _ingresarKey,
                     onPressed: _ordenando ? null : _ingresar,
                     icon: const Icon(Icons.edit),
                     label: const Text("Ingresar"),
                   ),
                   ElevatedButton.icon(
+                    key: _guardarKey,
                     onPressed: _ordenando ? null : _guardar,
                     icon: const Icon(Icons.save),
                     label: const Text("Guardar"),
                   ),
                   ElevatedButton.icon(
+                    key: _cargarKey,
                     onPressed: _ordenando ? null : _cargar,
                     icon: const Icon(Icons.folder_open),
                     label: const Text("Cargar"),
                   ),
                   ElevatedButton.icon(
+                    key: _resolverKey,
                     onPressed: _ordenando ? null : _resolver,
                     icon: const Icon(Icons.play_arrow),
                     label: const Text("Resolver"),
