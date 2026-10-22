@@ -29,6 +29,10 @@ abstract class CanvasOverlay {
     return "";
   }
 
+  Offset namePosition(Node node){
+    return Offset.zero;
+  }
+
   void paintAfterEdges(OverlayPaintContext paintCtx){
 
   }

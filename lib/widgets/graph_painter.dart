@@ -168,7 +168,8 @@ class GraphPainter extends CustomPainter{
         textDirection: TextDirection.ltr,
       );
       label.layout();
-      label.paint(canvas, Offset(pos.dx-10, pos.dy-10));
+      Offset namePos = canvasOverlay.namePosition(node) + Offset(pos.dx-10, pos.dy-10);
+      label.paint(canvas, namePos);
     });
 
     canvasOverlay.paintAfterNodes(OverlayPaintContext(canvas: canvas, nodes: nodes, positionOf: _positionOf));
