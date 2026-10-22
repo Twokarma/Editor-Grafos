@@ -267,9 +267,13 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
                     )),
           );
           break;
-        // ★ MANUAL: abre graph_maker_guia_rapida.pdf
+        // ★ MANUAL: abre la guía de Johnson
         case MenuOption.manual:
-          openManual(context);
+          openManual(
+            context,
+            title: 'Johnson',
+            assetPath: 'assets/docs/guia_johnson.pdf',
+          );
           break;
       }
     }

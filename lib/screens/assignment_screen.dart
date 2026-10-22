@@ -180,7 +180,11 @@ class _AssignmentScreenState extends State<AssignmentScreen>{
           break;
         // ★ CORRECCIÓN: faltaba este caso; el switch no era exhaustivo y la opción "Manual" no hacía nada
        case MenuOption.manual:
-  openManual(context);
+  openManual(
+    context,
+    title: 'Asignación',
+    assetPath: 'assets/docs/guia_asignacion.pdf',
+  );
   break;
       }
     }

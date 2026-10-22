@@ -333,7 +333,7 @@ class _ShellSortState extends State<ShellSort> {
             onPressed: () => openManual(
               context,
               title: 'Shell Sort',
-              assetPath: 'assets/docs/Shell_Sort.pdf',
+              assetPath: 'assets/docs/guia_shell_sort.pdf',
             ),
             tooltip: "Manual",
             icon: const Icon(Icons.menu_book_outlined),

@@ -384,7 +384,7 @@ void _startTour() {
             onPressed: () => openManual(
               context,
               title: 'Merge Sort',
-              assetPath: 'assets/docs/Merge_Sort.pdf',
+              assetPath: 'assets/docs/guia_merge_sort.pdf',
             ),
             tooltip: "Manual",
             icon: const Icon(Icons.menu_book_outlined),

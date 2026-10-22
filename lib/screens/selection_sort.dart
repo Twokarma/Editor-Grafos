@@ -336,7 +336,7 @@ class _SelectionSortState extends State<SelectionSort> {
             onPressed: () => openManual(
               context,
               title: 'Selection Sort',
-              assetPath: 'assets/docs/Selection_Sort.pdf',
+              assetPath: 'assets/docs/guia_selection_sort.pdf',
             ),
             tooltip: "Manual",
             icon: const Icon(Icons.menu_book_outlined),

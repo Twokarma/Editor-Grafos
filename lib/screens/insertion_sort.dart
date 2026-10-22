@@ -338,7 +338,7 @@ void _startTour() {
             onPressed: () => openManual(
               context,
               title: 'Insertion Sort',
-              assetPath: 'assets/docs/Insertion_Sort.pdf',
+              assetPath: 'assets/docs/guia_insertion_sort.pdf',
             ),
             tooltip: "Help",
             icon: const Icon(Icons.menu_book_outlined),

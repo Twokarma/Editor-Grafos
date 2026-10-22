@@ -215,7 +215,11 @@ class _GraphScreenState extends State<GraphScreen> {
             key: _manualKey,
             icon: const Icon(Icons.menu_book_outlined),
             tooltip: "Manual",
-            onPressed: () => openManual(context),
+            onPressed: () => openManual(
+              context,
+              title: 'Graph Maker',
+              assetPath: 'assets/docs/guia_graph_maker.pdf',
+            ),
           ),
           IconButton(
             key: _helpKey,
