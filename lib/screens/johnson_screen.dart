@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 
 import '../models/node.dart';
-import '../widgets/dialogs/confirm_exit_copy_dialog.dart';
 import '../widgets/dialogs/open_graph_dialog.dart';
 import '../widgets/dialogs/save_graph_dialog.dart';
 import '../widgets/graph_canvas.dart';
@@ -94,22 +93,17 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
   }
 
   void _onGraphChanged() {
-    // ★ evita "setState called during build" si el provider notifica en pleno build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (_lastSignature != _structureSignature()) {
-        setState(() {
-          _lastResult = null;
-          _pathEdgeIds = {};
-          _message = null;
-          _hasChanges = true;
-        });
-      } else {
-        setState(() {
-          _hasChanges = false;
-        });
-      }
-    });
+    // Sin setState ni postFrameCallback: context.watch ya reconstruye la
+    // pantalla, y el camino viejo debe limpiarse antes de ese build
+    // (si no, _buildTextPath busca aristas borradas).
+    if (_lastSignature != _structureSignature()) {
+      _lastResult = null;
+      _pathEdgeIds = {};
+      _message = null;
+      _hasChanges = true;
+    } else {
+      _hasChanges = false;
+    }
   }
 
   @override
@@ -240,12 +234,8 @@ class _JohnsonScreenState extends State<JohnsonScreen> {
     // ★ aviso corregido: interpolación innecesaria
     path += nodes[edges[copy[0]]!.targetNodeId]!.name;
 
-    // ★ CORRECCIÓN: el costo es la suma de pesos, no un id de arista
-    num total = 0;
-    for (final id in copy) {
-      total += edges[id]!.weight;
-    }
-    return "$path = $total";
+    // JohnsonService.path() agrega la distancia total como último elemento
+    return "$path = ${copy[copy.length - 1]}";
   }
 
   @override
