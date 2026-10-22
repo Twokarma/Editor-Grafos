@@ -54,7 +54,7 @@ class JohnsonOverlay extends HighlightOverlay{
         textDirection: TextDirection.ltr,
       );
       latest.layout();
-      latest.paint(canvas, Offset(center.dx - node.radius * 0.65 , center.dy));
+      latest.paint(canvas, Offset(center.dx - node.radius/2 - latest.width/2, center.dy));
 
       final earliest = TextPainter(
         text: TextSpan(
@@ -67,7 +67,7 @@ class JohnsonOverlay extends HighlightOverlay{
         textDirection: TextDirection.ltr,
       );
       earliest.layout();
-      earliest.paint(canvas, Offset(center.dx + node.radius * 0.3 , center.dy));
+      earliest.paint(canvas, Offset(center.dx + node.radius/2 - latest.width/2, center.dy));
     }
   }
 
