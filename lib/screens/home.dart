@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -151,6 +152,15 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _pageMaxWidth = 1120.0;
   static const _anim = Duration(milliseconds: 450);
 
+  // Controla la lista horizontal de algoritmos; lo comparte la barra de scroll.
+  final _methodsScroll = ScrollController();
+
+  @override
+  void dispose() {
+    _methodsScroll.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -231,27 +241,48 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(sidePad, 8, sidePad, 48),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (var i = 0; i < _methods.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: _MethodCard(
-                          method: _methods[i],
-                          isOpen: _openCard == i,
-                          duration: _anim,
-                          onTap: () => setState(
-                            () => _openCard = _openCard == i ? null : i,
+              // En computadora: barra horizontal siempre visible debajo de las
+              // tarjetas (se puede arrastrar) y la lista también se arrastra con el mouse.
+              ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  scrollbars: false, // evita una segunda barra automática
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                    PointerDeviceKind.stylus,
+                  },
+                ),
+                child: Scrollbar(
+                  controller: _methodsScroll,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  interactive: true,
+                  child: SingleChildScrollView(
+                    controller: _methodsScroll,
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.fromLTRB(sidePad, 8, sidePad, 24),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var i = 0; i < _methods.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: _MethodCard(
+                              method: _methods[i],
+                              isOpen: _openCard == i,
+                              duration: _anim,
+                              onTap: () => setState(
+                                () => _openCard = _openCard == i ? null : i,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
