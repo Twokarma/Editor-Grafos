@@ -50,7 +50,7 @@ class AssignmentService {
 
     final bool dummyRows = cols > rows;
     final List<Node> side = dummyRows ? matrix.rowHeaders : matrix.colHeaders;
-    final List<GhostNode> ghosts = _placeGhosts(side, n - (dummyRows ? rows : cols));
+    final List<GhostNode> ghosts = placeGhosts(side, n - (dummyRows ? rows : cols));
 
     String rowId(int i) => i < rows ? matrix.rowHeaders[i].id : ghosts[i - rows].id;
     String colId(int j) => j < cols ? matrix.colHeaders[j].id : ghosts[j - cols].id;
@@ -121,7 +121,7 @@ class AssignmentService {
 
   static bool isDummy(Node node) => node.id.startsWith("dummy_");
 
-  List<GhostNode> _placeGhosts(List<Node> side, int count){
+  List<GhostNode> placeGhosts(List<Node> side, int count){
     if(count <= 0 || side.isEmpty) return [];
     final double radius = side.first.radius;
     final double minDistance = 2 * radius + 3;

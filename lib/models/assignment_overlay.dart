@@ -27,7 +27,10 @@ class GhostEdge {
   final bool assigned;
   final bool noEdge;
 
-  GhostEdge(this.sourceId, this.targetId, this.weight, {this.assigned = false, this.noEdge = false});
+  /// Texto a dibujar sobre la arista. Si es null se usa el peso (o "no edge").
+  final String? label;
+
+  GhostEdge(this.sourceId, this.targetId, this.weight, {this.assigned = false, this.noEdge = false, this.label});
 }
 
 class AssignmentOverlay {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../algorithms/transportation.dart';
+import '../models/assignment_overlay.dart';
 import '../models/matrix_data.dart';
 import '../providers/graph_provider.dart';
 import '../theme/app_colors.dart';
@@ -12,7 +13,8 @@ import '../widgets/dialogs/open_graph_dialog.dart';
 import '../widgets/dialogs/save_graph_dialog.dart';
 import '../widgets/graph_canvas.dart';
 import '../widgets/menu_option.dart';
-import '../widgets/overlays/highlight_overlay.dart';
+import '../services/transportation_overlay_builder.dart';
+import '../widgets/overlays/assignment_canvas_overlay.dart';
 import 'transportation_steps_screen.dart';
 
 /// Problema de transporte sobre el grafo.
@@ -40,7 +42,8 @@ class _TransportationScreenState extends State<TransportationScreen> {
   TransportationResult? _result;
   List<String> _sourceNames = const [];
   List<String> _destinationNames = const [];
-  Set<String> _flowEdgeIds = {};
+  // Aristas resaltadas y nodo fantasma (si hubo que balancear).
+  AssignmentOverlay _overlay = AssignmentOverlay();
 
   // Último texto escrito para cada nodo (por id), para no volver a escribirlo.
   final Map<String, String> _supplyText = {};
@@ -65,7 +68,7 @@ class _TransportationScreenState extends State<TransportationScreen> {
     if (_result == null) return;
     setState(() {
       _result = null;
-      _flowEdgeIds = {};
+      _overlay = AssignmentOverlay();
     });
   }
 
@@ -124,19 +127,13 @@ class _TransportationScreenState extends State<TransportationScreen> {
       return;
     }
 
-    final flowEdgeIds = <String>{};
-    if (!result.isInfeasible) {
-      for (final flow in result.realFlows) {
-        final id = matrix.edgeIds[flow.row][flow.col];
-        if (id.isNotEmpty) flowEdgeIds.add(id);
-      }
-    }
+    final overlay = TransportationOverlayBuilder.build(matrix, result);
 
     setState(() {
       _result = result;
       _sourceNames = [for (final n in rows) n.name];
       _destinationNames = [for (final n in cols) n.name];
-      _flowEdgeIds = flowEdgeIds;
+      _overlay = overlay;
     });
     _showSummary(result);
   }
@@ -317,7 +314,12 @@ class _TransportationScreenState extends State<TransportationScreen> {
           ],
         ),
         body: GraphWidget(
-          canvasOverlay: HighlightOverlay(_flowEdgeIds, AppColors.assignmentEdge),
+          canvasOverlay: AssignmentCanvasOverlay(
+            _overlay.highlightedEdgeIds,
+            AppColors.assignmentEdge,
+            _overlay.nodes,
+            _overlay.edges,
+          ),
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(

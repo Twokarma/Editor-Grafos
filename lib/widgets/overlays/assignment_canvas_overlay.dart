@@ -59,7 +59,7 @@ class AssignmentCanvasOverlay extends HighlightOverlay{
       final midY = (sourcePos.dy + tip.dy) / 2 + ux * Draw.labelOffset;
       final label = TextPainter(
         text: TextSpan(
-          text: edge.noEdge ? "no edge" : "${edge.weight}",
+          text: edge.label ?? (edge.noEdge ? "no edge" : "${edge.weight}"),
           style: TextStyle(
             color: color,
             fontSize: edge.assigned ? 15 : 12,
