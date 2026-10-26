@@ -43,4 +43,5 @@ class AppColors {
   static const Color mustard = Color.fromARGB(255, 251, 183, 3);
   static const Color orange = Color.fromARGB(255, 251, 133, 0);
   static const Color white = Color.fromARGB(255, 255, 255, 255);
+  static const Color paper = Color.fromARGB(255, 230, 231, 233);
 }
